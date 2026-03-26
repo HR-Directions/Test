@@ -258,58 +258,83 @@ window.savePopup=function(){
     document.getElementById("amount").value=document.getElementById("note").value=document.getElementById("user").value=document.getElementById("batchNum").value=document.getElementById("calcField").value=""; closePopup();
 }
 
-function renderInsta(){ let t=0; instaTable.innerHTML=""; instaArr.forEach((i,idx)=>{ t+=i.amount; instaTable.innerHTML+=`<tr><td>${i.amount}</td><td>${i.mobile}</td><td>${i.name}</td><td><span class="removeBtn" onclick="removeRow('insta',${idx})">-</span></td></tr>`; }); instaTotal.value=t; document.getElementById("instaSummary").innerText=`إجمالي انستا: ${t.toFixed(2)} | العمليات: ${instaArr.length}`; calc(); }
-function renderWallet(){ let t=0; walletTable.innerHTML=""; walletArr.forEach((i,idx)=>{ t+=i.amount; walletTable.innerHTML+=`<tr><td>${i.amount}</td><td>${i.mobile}</td><td>${i.name}</td><td><span class="removeBtn" onclick="removeRow('wallet',${idx})">-</span></td></tr>`; }); walletTotal.value=t; document.getElementById("walletSummary").innerText=`إجمالي المحفظة: ${t.toFixed(2)} | العمليات: ${walletArr.length}`; calc(); }
-function renderVisa(){ let ta=0, tc=0; visaTable.innerHTML=""; visaArr.forEach((v,idx)=>{ ta+=v.amount; tc+=v.count; visaTable.innerHTML+=`<tr><td>${v.batch}</td><td>${v.amount}</td><td>${v.count}</td><td><span class="removeBtn" onclick="removeRow('visa',${idx})">-</span></td></tr>`; }); visaTotal.value=ta; document.getElementById("visaSummary").innerText=`إجمالي الفيزا: ${ta} | العمليات: ${tc} | الباتشات: ${visaArr.length}`; calc(); }
-function renderPurchases(){ let t=0; purchaseTable.innerHTML=""; purchases.forEach((p,idx)=>{ t+=p.amount; purchaseTable.innerHTML+=`<tr><td>${p.amount}</td><td>${p.note}</td><td>${p.user}</td><td><span class="removeBtn" onclick="removeRow('purchase',${idx})">-</span></td></tr>`; }); pTotal.value=t; }
-function renderExpenses(){ let t=0; expenseTable.innerHTML=""; expenses.forEach((e,idx)=>{ t+=e.amount; expenseTable.innerHTML+=`<tr><td>${e.amount}</td><td>${e.note}</td><td>${e.user}</td><td><span class="removeBtn" onclick="removeRow('expense',${idx})">-</span></td></tr>`; }); eTotal.value=t; }
+function printSingle(d) { printThermal(d, false); }
 
-window.removeRow=function(t,i){ if(t=='insta'){instaArr.splice(i,1);renderInsta();} if(t=='wallet'){walletArr.splice(i,1);renderWallet();} if(t=='visa'){visaArr.splice(i,1);renderVisa();} if(t=='purchase'){purchases.splice(i,1);renderPurchases();} if(t=='expense'){expenses.splice(i,1);renderExpenses();} }
-function calc(){ total.value=((+cash.value||0)+(+instaTotal.value||0)+(+walletTotal.value||0)+(+visaTotal.value||0)).toFixed(2); diff.value=((+actual.value||0)-(+total.value||0)).toFixed(2); }
+    function printThermal(d, isAgg) {
+        const area = document.getElementById("thermalArea");
+        const branchTitle = isAgg ? Array.from(d.branchNames).join(" + ") : d.branchName;
+        
+        area.innerHTML = `
+            <div class="print-header">
+                <img src="${logoUrl}" class="header-logo-img">
+                <div class="header-text-side">
+                    <h2 class="header-branch-name">${branchTitle}</h2>
+                    <div style="font-size:10px; font-weight:bold;">تقرير ${isAgg ? 'يومي مجمع' : 'تسليم وردية'}</div>
+                </div>
+            </div>
 
-// وظيفة ملء الريسيت للطباعة
-function fillReceipt(){
-    document.getElementById("rp-day").innerText = dayInput.value;
-    document.getElementById("rp-date").innerText = dateInput.value;
-    document.getElementById("rp-drawer").innerText = document.getElementById("drawer").value;
-    document.getElementById("rp-cash").innerText = cash.value || 0;
-    document.getElementById("rp-insta").innerText = instaTotal.value || 0;
-    document.getElementById("rp-wallet").innerText = walletTotal.value || 0;
-    document.getElementById("rp-visa").innerText = visaTotal.value || 0;
-    document.getElementById("rp-actual").innerText = actual.value || 0;
-    document.getElementById("rp-total").innerText = total.value || 0;
-    document.getElementById("rp-diff").innerText = diff.value || 0;
-    document.getElementById("rp-manager").innerText = drawerManager.value;
-    document.getElementById("rp-reviewer").innerText = reviewer.value;
+            <!-- تم تعديل هذا السطر ليشمل اليوم بجانب التاريخ والدرج -->
+            <table class="receipt-table" style="margin-bottom:8px; border:none;">
+                <tr style="border:none;">
+                    <td style="border:1.5px solid #000;">اليوم: ${d.day || '---'}</td>
+                    <td style="border:1.5px solid #000;">التاريخ: ${d.date}</td>
+                    <td style="border:1.5px solid #000;">الدرج: ${isAgg ? 'مجمع' : `#${d.drawer}`}</td>
+                </tr>
+            </table>
 
-    
-    // المشتريات
-    let pBody = document.getElementById("rp-p-body"); pBody.innerHTML = "";
-    if(purchases.length > 0){
-        document.getElementById("sec-purchases").style.display = "block";
-        purchases.forEach(p => pBody.innerHTML += `<tr><td>${p.amount}</td><td>${p.note}</td><td>${p.user}</td></tr>`);
-        document.getElementById("rp-p-total").innerText = pTotal.value;
-    } else document.getElementById("sec-purchases").style.display = "none";
+            <table class="receipt-table" style="font-size:14px;">
+                <tr style="background:#eee"><th>البيان</th><th>القيمة</th></tr>
+                <tr><td>إجمالي الكاش</td><td>${d.cash}</td></tr>
+                <tr><td>انستا باي</td><td>${sum(d.insta)}</td></tr>
+                <tr><td>محافظ</td><td>${sum(d.wallet)}</td></tr>
+                <tr><td>فيزا مبيعات</td><td>${sum(d.visa)}</td></tr>
+                <tr style="background:#f0f0f0; font-size:17px;"><td>المبلغ الفعلي</td><td>${d.actual}</td></tr>
+                <tr><td>إجمالي الحساب</td><td>${d.total}</td></tr>
+                <tr style="color:${+d.diff < 0 ? 'red' : 'green'}"><td>الفرق</td><td>${d.diff}</td></tr>
+            </table>
 
-    // الفيزا
-    let vBody = document.getElementById("rp-v-body"); vBody.innerHTML = "";
-    if(visaArr.length > 0){
-        document.getElementById("sec-visa").style.display = "block";
-        visaArr.forEach(v => vBody.innerHTML += `<tr><td>${v.batch}</td><td>${v.amount}</td><td>${v.count}</td></tr>`);
-        document.getElementById("rp-v-total").innerText = visaTotal.value;
-    } else document.getElementById("sec-visa").style.display = "none";
-}
+            ${renderSubTablePrint("تفاصيل انستا باي", d.insta, 'trans')}
+            ${renderSubTablePrint("تفاصيل المحافظ", d.wallet, 'trans')}
+            ${renderSubTablePrint("تفاصيل المشتريات", d.purchases, 'exp')}
+            ${renderSubTablePrint("تفاصيل المصروفات", d.expenses, 'exp')}
+            ${renderSubTablePrint("تفاصيل الفيزا", d.visa, 'visa')}
 
-window.saveData=function(){
-    if(!dateInput.value||!document.getElementById("drawer").value||!cash.value||!actual.value){ alert("أكمل البيانات الإجبارية أولاً"); return; }
-    let data={ branchKey:branchSelect.value, branchName:branchSelect.options[0].text, drawerManager:drawerManager.value, reviewer:reviewer.value, date:dateInput.value, day:dayInput.value, drawer:document.getElementById("drawer").value, cash:+cash.value, insta:instaArr, wallet:walletArr, visa:visaArr, purchases, expenses, total:total.value, actual:actual.value, diff:diff.value, timestamp: new Date().getTime() };
-    db.ref("treasury").push(data).then(()=>{
-        fillReceipt();
-        document.getElementById("successDrawer").innerText = "رقم الدرج: " + data.drawer;
-        document.getElementById("successPopup").style.display = "flex";
-    });
-}
-});
+            <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1.5px solid #000; padding-top:8px; font-size:10px; font-weight:bold;">
+                <div>المسؤول: ${d.drawerManager || '_______'}</div>
+                <div>المراجع: ${d.reviewer || '_______'}</div>
+            </div>
+            
+            <div style="text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #ccc; padding-top:4px;">
+                النظام الموحد - ${new Date().toLocaleString('ar-EG')}
+            </div>
+        `;
+        setTimeout(() => { window.print(); }, 300);
+    }
+
+    function renderSubTablePrint(title, arr, type) {
+        if(!arr || arr.length === 0) return "";
+        let h = `<div style="text-align:center; font-weight:900; margin-top:8px; border-top:1px dashed #000; padding-top:2px; font-size:10px;">-- ${title} --</div>`;
+        h += `<table class="receipt-table"><thead><tr>`;
+        
+        if(type==='visa') h += `<th>باتش</th><th>قيمة</th><th>ع</th>`;
+        else if(type==='trans') h += `<th>مبلغ</th><th>الرقم</th><th>الاسم</th>`;
+        else h += `<th>مبلغ</th><th>البيان</th><th>المستلم</th>`;
+        
+        h += `</tr></thead><tbody>`;
+        arr.forEach(x => {
+            h += `<tr>`;
+            if(type==='visa') h += `<td>${x.batch}</td><td>${x.amount}</td><td>${x.count}</td>`;
+            else if(type==='trans') h += `<td>${x.amount}</td><td>${x.mobile||''}</td><td>${x.name||''}</td>`;
+            else h += `<td>${x.amount}</td><td>${x.note||''}</td><td>${x.user||''}</td>`;
+            h += `</tr>`;
+        });
+        
+        let totalVal = sum(arr);
+        h += `<tr style="background:#eee"><td>إجمالي</td><td colspan="2">${totalVal}</td></tr>`;
+        
+        h += `</tbody></table>`;
+        return h;
+    } 
 </script>
 </body>
 </html>
