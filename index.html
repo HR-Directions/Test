@@ -17,7 +17,6 @@ button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight
 .add{background:#27ae60;color:#fff;}
 .save{background:#2980b9;color:#fff;flex:2;}
 .report-btn{background:#e67e22;color:#fff;text-decoration:none;display:inline-block;padding:8px 15px;border-radius:6px;flex:1;text-align:center;}
-.print-btn{background:#34495e;color:#fff;padding:8px 15px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-top:10px;}
 .total{background:#f1f1f1;font-weight:bold}
 .flex{display:flex;gap:15px;flex-wrap:wrap;}
 .flex > div{flex:1;min-width:300px;}
@@ -29,45 +28,35 @@ button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight
 .btn-group {display:flex; gap:10px; margin-top:15px;}
 .success-icon {font-size: 40px; color: #27ae60; margin-bottom: 10px;}
 
-/* تصميم الريسيت (مخفي في المتصفح) */
-#receipt-print { display: none; }
+/* تصميم الريسيت للطباعة */
+#receipt-print {
+    display: none;
+    width: 80mm;
+    background: #fff;
+    padding: 5mm;
+    margin: 0 auto;
+    border: 1px solid #eee;
+    font-size: 12px;
+}
+.receipt-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
+.receipt-header h2 { margin: 5px 0; font-size: 18px; }
+.receipt-info { display: flex; justify-content: space-between; border-bottom: 1px solid #000; padding: 5px 0; margin-bottom: 5px; font-weight: bold; }
+.receipt-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+.receipt-table th, .receipt-table td { border: 1px solid #000; padding: 4px; font-size: 11px; }
+.section-title { text-align: center; font-weight: bold; margin: 10px 0 5px 0; border-top: 1px dashed #000; padding-top: 5px; }
+.receipt-footer { margin-top: 15px; border-top: 1px solid #000; padding-top: 5px; font-size: 11px; }
 
 @media print {
-    @page { size: 80mm 279mm; margin: 0; }
     body * { visibility: hidden; background: none !important; }
     #receipt-print, #receipt-print * { visibility: visible; }
-    #receipt-print {
-        display: block !important;
-        position: absolute;
-        left: 0; top: 0;
-        width: 80mm;
-        padding: 5mm;
-        font-size: 12px;
-        line-height: 1.4;
-        color: #000;
-        text-align: center;
-        direction: rtl;
-    }
-    .receipt-header { font-weight: bold; font-size: 16px; margin-bottom: 5px; border-bottom: 1px dashed #000; padding-bottom: 5px; }
-    .receipt-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    .receipt-table td { border: none; padding: 3px 0; text-align: right; }
-    .receipt-table td:last-child { text-align: left; font-weight: bold; }
-    .receipt-divider { border-top: 1px dashed #000; margin: 8px 0; }
-    .receipt-footer { font-size: 10px; margin-top: 15px; }
+    #receipt-print { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
+    .no-print { display: none !important; }
 }
 
 @media(max-width:800px){.flex{flex-direction:column;}}
 </style>
 </head>
 <body>
-
-<!-- منطقة الطباعة -->
-<div id="receipt-print">
-    <div class="receipt-header">إيصال إغلاق خزينة</div>
-    <div id="print-content"></div>
-    <div class="receipt-divider"></div>
-    <div class="receipt-footer">طُبع بواسطة نظام الخزينة المطور</div>
-</div>
 
 <!-- تسجيل الدخول -->
 <div class="popup" id="loginPopup" style="display:flex;">
@@ -81,8 +70,11 @@ button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight
   </div>
 </div>
 
+<!-- الواجهة الرئيسية -->
 <div class="container" id="mainContainer">
+
 <h3>💰 تسجيل الخزينة</h3>
+
 <div class="card">
 <table>
 <tr>
@@ -96,6 +88,7 @@ button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight
 </table>
 </div>
 
+<!-- الحركات -->
 <div class="card">
 <table>
 <tr><th>الحركة</th><th>المبلغ</th><th>الإجمالي</th></tr>
@@ -117,52 +110,76 @@ button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight
 <tr>
 <td>مبيعات فيزا</td>
 <td><button class="add" onclick="openPopup('visa')">+ إضافة</button></td>
-<td><input id="visaTotal" class="total" readonly></td>
+<td><input id="visaTotal" class="total" readonly title="إجمالي مبالغ الفيزا"></td>
 </tr>
 <tr>
-<td>الإجمالي</td>
+<td>الإجمالي الحسابي</td>
 <td colspan="2"><input id="total" class="total" readonly></td>
 </tr>
 <tr>
-<td>فعلي <span style="color:red">*</span></td>
+<td>المبلغ الفعلي <span style="color:red">*</span></td>
 <td colspan="2"><input id="actual" oninput="convertNumber(this);calc()" placeholder="إجباري"></td>
 </tr>
 <tr>
-<td>العجز / الزيادة</td>
+<td>العجز / الزيادة (الفرق)</td>
 <td colspan="2"><input id="diff" class="total" readonly></td>
 </tr>
 </table>
 </div>
 
+<!-- جداول المبيعات -->
 <div class="flex">
 <div class="card">
 <h4>انستا</h4>
-<table id="instaTableRef"><thead><tr><th>المبلغ</th><th>الرقم</th><th>-</th></tr></thead><tbody id="instaTable"></tbody></table>
-<div class="footer-summary" id="instaSummary">إجمالي انستا: 0</div>
-</div>
-<div class="card">
-<h4>محفظة</h4>
-<table id="walletTableRef"><thead><tr><th>المبلغ</th><th>الرقم</th><th>-</th></tr></thead><tbody id="walletTable"></tbody></table>
-<div class="footer-summary" id="walletSummary">إجمالي المحفظة: 0</div>
-</div>
-<div class="card">
-<h4>فيزا</h4>
-<table id="visaTableRef"><thead><tr><th>الباتش</th><th>المبلغ</th><th>-</th></tr></thead><tbody id="visaTable"></tbody></table>
-<div class="footer-summary" id="visaSummary">إجمالي الفيزا: 0</div>
+<table>
+<thead><tr><th>المبلغ</th><th>الرقم</th><th>الاسم</th><th>-</th></tr></thead>
+<tbody id="instaTable"></tbody>
+</table>
+<div class="footer-summary" id="instaSummary">
+إجمالي انستا: 0 | العمليات: 0
 </div>
 </div>
 
+<div class="card">
+<h4>محفظة</h4>
+<table>
+<thead><tr><th>المبلغ</th><th>الرقم</th><th>الاسم</th><th>-</th></tr></thead>
+<tbody id="walletTable"></tbody>
+</table>
+<div class="footer-summary" id="walletSummary">
+إجمالي المحفظة: 0 | العمليات: 0
+</div>
+</div>
+
+<div class="card">
+<h4>فيزا</h4>
+<table>
+<thead><tr><th>الباتش</th><th>المبلغ</th><th>العمليات</th><th>-</th></tr></thead>
+<tbody id="visaTable"></tbody>
+</table>
+<div class="footer-summary" id="visaSummary">
+إجمالي الفيزا: 0 | العمليات: 0 | الباتشات: 0
+</div>
+</div>
+</div>
+
+<!-- مشتريات ومصروفات -->
 <div class="flex">
 <div class="card">
 <h4>المشتريات</h4>
 <button class="add" onclick="openPopup('purchase')">+ إضافة</button>
-<table><tbody id="purchaseTable"></tbody></table>
+<table>
+<tbody id="purchaseTable"></tbody>
+</table>
 الإجمالي <input id="pTotal" readonly>
 </div>
+
 <div class="card">
 <h4>المصروفات</h4>
 <button class="add" onclick="openPopup('expense')">+ إضافة</button>
-<table><tbody id="expenseTable"></tbody></table>
+<table>
+<tbody id="expenseTable"></tbody>
+</table>
 الإجمالي <input id="eTotal" readonly>
 </div>
 </div>
@@ -181,17 +198,29 @@ button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight
 </div>
 </div>
 
+<!-- popup إضافة -->
 <div class="popup" id="popup">
 <div class="box">
 <h4 id="popupTitle">إضافة</h4>
-<div id="standardFields"><input id="amount" placeholder="المبلغ" oninput="convertNumber(this)"></div>
-<div id="transferFields" style="display:none"><select id="mobileSelect" onchange="showName()"></select><input id="nameField" placeholder="الاسم" readonly></div>
+<div id="standardFields">
+    <input id="amount" placeholder="المبلغ" oninput="convertNumber(this)">
+</div>
+<div id="transferFields" style="display:none">
+    <select id="mobileSelect" onchange="showName()"></select>
+    <input id="nameField" placeholder="الاسم" readonly>
+</div>
 <div id="visaFields" style="display:none">
     <input id="batchNum" placeholder="رقم الباتش *">
-    <input id="calcField" placeholder="الحسبة (10+20)" oninput="handleVisaCalc(this)">
-    <div style="display:flex; gap:5px;"><input id="visaAmount" placeholder="الإجمالي" readonly><input id="visaCount" placeholder="العدد" readonly></div>
+    <input id="calcField" placeholder="الحسبة (مثال: 10+20)" oninput="handleVisaCalc(this)">
+    <div style="display:flex; gap:5px;">
+        <input id="visaAmount" placeholder="الإجمالي" readonly style="background:#eee">
+        <input id="visaCount" placeholder="العدد" readonly style="background:#eee">
+    </div>
 </div>
-<div id="noteFields" style="display:none"><input id="note" placeholder="البيان"><input id="user" placeholder="المسؤول"></div>
+<div id="noteFields" style="display:none">
+    <input id="note" placeholder="البيان / الترحيلة">
+    <input id="user" placeholder="المسؤول">
+</div>
 <div class="btn-group">
     <button class="add" onclick="savePopup()">حفظ</button>
     <button style="background:#95a5a6; color:#fff;" onclick="closePopup()">إلغاء</button>
@@ -199,36 +228,115 @@ button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight
 </div>
 </div>
 
+<!-- نافذة النجاح بعد الحفظ -->
 <div class="popup" id="successPopup">
 <div class="box">
 <div class="success-icon">✅</div>
 <h3 id="successMsg">تم الحفظ بنجاح</h3>
 <p id="successDrawer"></p>
 <div class="btn-group" style="flex-direction: column;">
-    <button class="print-btn" onclick="printReceipt()">🖨️ طباعة إيصال (80mm)</button>
-    <a href="https://hr-directions.github.io/Shift-review-/" target="_blank" class="report-btn" style="width: 100%; margin-top:10px;">📋 عرض تقرير اليوم</a>
+    <button style="background:#27ae60; color:#fff; width: 100%;" onclick="printReceipt()">🖨️ طباعة ريسيت</button>
+    <a href="https://hr-directions.github.io/Shift-review-/" target="_blank" class="report-btn" style="width: 100%; margin-top: 10px;">📋 عرض تقرير اليوم</a>
     <button style="background:#2c3e50; color:#fff; width: 100%; margin-top: 10px;" onclick="location.reload()">تسجيل جديد</button>
 </div>
 </div>
+</div>
+
+<!-- محتوى الريسيت المخفي للطباعة -->
+<div id="receipt-print">
+    <div class="receipt-header">
+        <h2>صيدليات ولاء</h2>
+        <div style="font-size: 14px; font-weight: bold;">تقرير تسليم وردية</div>
+        <div>(18200)</div>
+    </div>
+    
+    <div class="receipt-info">
+        <span>اليوم: <span id="r-day"></span></span>
+        <span>التاريخ: <span id="r-date"></span></span>
+        <span>الدرج: #<span id="r-drawer"></span></span>
+    </div>
+
+    <table class="receipt-table">
+        <tr><th>البيان</th><th>القيمة</th></tr>
+        <tr><td>إجمالي الكاش</td><td id="r-cash">0</td></tr>
+        <tr><td>انستا باي</td><td id="r-insta">0</td></tr>
+        <tr><td>محافظ</td><td id="r-wallet">0</td></tr>
+        <tr><td>فيزا مبيعات</td><td id="r-visa">0</td></tr>
+        <tr style="font-weight: bold;"><td>المبلغ الفعلي</td><td id="r-actual">0</td></tr>
+        <tr style="font-weight: bold;"><td>إجمالي الحساب</td><td id="r-total">0</td></tr>
+        <tr style="font-weight: bold; background: #eee;"><td>الفرق</td><td id="r-diff">0</td></tr>
+    </table>
+
+    <div class="section-title">-- تفاصيل المشتريات --</div>
+    <table class="receipt-table">
+        <thead><tr><th>مبلغ</th><th>البيان</th><th>المستلم</th></tr></thead>
+        <tbody id="r-purchases-body"></tbody>
+        <tfoot><tr style="font-weight: bold;"><td id="r-p-total">0</td><td colspan="2">إجمالي</td></tr></tfoot>
+    </table>
+
+    <div class="section-title">-- تفاصيل الفيزا --</div>
+    <table class="receipt-table">
+        <thead><tr><th>باتش</th><th>قيمة</th><th>ع</th></tr></thead>
+        <tbody id="r-visa-body"></tbody>
+        <tfoot><tr style="font-weight: bold;"><td colspan="2">إجمالي</td><td id="r-v-total">0</td></tr></tfoot>
+    </table>
+
+    <div class="receipt-footer">
+        <div>المسؤول: <span id="r-manager"></span></div>
+        <div>المراجع: <span id="r-reviewer"></span></div>
+        <div style="text-align:center; font-size:9px; margin-top:5px;">تاريخ الطباعة: <span id="r-print-time"></span></div>
+    </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function(){
+
 const firebaseConfig={databaseURL:"https://sample-firebase-ai-app-e4260-default-rtdb.firebaseio.com/"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
-let branchSelect=document.getElementById("branch"), dateInput=document.getElementById("date"), dayInput=document.getElementById("day"), cash=document.getElementById("cash");
-let instaTotal=document.getElementById("instaTotal"), walletTotal=document.getElementById("walletTotal"), visaTotal=document.getElementById("visaTotal");
-let total=document.getElementById("total"), actual=document.getElementById("actual"), diff=document.getElementById("diff");
-let transfers=[], employees=[], instaArr=[], walletArr=[], visaArr=[], purchases=[], expenses=[], lastSavedData=null;
+// Elements
+let loginBtn=document.getElementById("loginBtn");
+let loginCode=document.getElementById("loginCode");
+let loginPassword=document.getElementById("loginPassword");
+let loginError=document.getElementById("loginError");
+let loginPopup=document.getElementById("loginPopup");
+let mainContainer=document.getElementById("mainContainer");
+let branchSelect=document.getElementById("branch");
+
+let dateInput=document.getElementById("date");
+let dayInput=document.getElementById("day");
+let cash=document.getElementById("cash");
+let instaTotal=document.getElementById("instaTotal");
+let walletTotal=document.getElementById("walletTotal");
+let visaTotal=document.getElementById("visaTotal");
+let total=document.getElementById("total");
+let actual=document.getElementById("actual");
+let diff=document.getElementById("diff");
+let instaTable=document.getElementById("instaTable");
+let walletTable=document.getElementById("walletTable");
+let visaTable=document.getElementById("visaTable");
+let purchaseTable=document.getElementById("purchaseTable");
+let expenseTable=document.getElementById("expenseTable");
+let pTotal=document.getElementById("pTotal");
+let eTotal=document.getElementById("eTotal");
+let drawerManager=document.getElementById("drawerManager");
+let reviewer=document.getElementById("reviewer");
+
+let transfers=[], employees=[];
+let instaArr=[], walletArr=[], visaArr=[], purchases=[], expenses=[];
+let mode="";
 
 window.handleVisaCalc = function(el) {
     el.value = el.value.replace(/[٠-٩]/g, d => d.charCodeAt(0) - 1632).replace(/[۰-۹]/g, d => d.charCodeAt(0) - 1776);
     let val = el.value;
-    if(!val) { document.getElementById("visaAmount").value = 0; document.getElementById("visaCount").value = 0; return; }
+    if(!val) {
+        document.getElementById("visaAmount").value = 0;
+        document.getElementById("visaCount").value = 0;
+        return;
+    }
     let clean = val.replace(/[^0-9+.]/g, '');
     let parts = clean.split('+').filter(p => p !== "");
     let sum = parts.reduce((a, b) => a + parseFloat(b || 0), 0);
@@ -243,128 +351,259 @@ window.convertNumber=function(el){
 }
 
 dateInput.addEventListener("change",function(){
-    if(!this.value) return;
+    if(!this.value) { dayInput.value = ""; return; }
+    let d=new Date(this.value);
     let days=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-    dayInput.value=days[new Date(this.value).getDay()];
+    dayInput.value=days[d.getDay()];
 });
 
-document.getElementById("loginBtn").addEventListener("click",function(){
-    let code=document.getElementById("loginCode").value.trim(), pass=document.getElementById("loginPassword").value.trim();
+loginBtn.addEventListener("click",function(){
+    let code=loginCode.value.trim();
+    let pass=loginPassword.value.trim();
+    if(!code||!pass){ loginError.innerText="الرجاء إدخال الكود والرقم السري"; return; }
+
     db.ref("branches").once("value").then(snapshot=>{
         let found=false;
         snapshot.forEach(branchKey=>{
-            let b=branchKey.val();
-            if(b.code==code && b.password==pass){
-                found=true; document.getElementById("loginPopup").style.display="none"; document.getElementById("mainContainer").style.display="block";
-                branchSelect.innerHTML=`<option value="${branchKey.key}">${b.name}</option>`;
-                initTreasury(branchKey.key);
+            let branch=snapshot.child(branchKey.key).val();
+            if(branch.code==code){
+                found=true;
+                if(branch.password==pass){
+                    loginPopup.style.display="none";
+                    mainContainer.style.display="block";
+                    branchSelect.innerHTML=`<option value="${branchKey.key}">${branch.name}</option>`;
+                    branchSelect.disabled=true;
+                    initTreasury(branchKey.key);
+                }else{ loginError.innerText="الرقم السري غير صحيح"; }
             }
         });
-        if(!found) document.getElementById("loginError").innerText="بيانات الدخول خاطئة";
-    });
+        if(!found){ loginError.innerText="كود الفرع غير موجود"; }
+    }).catch(err=>{ loginError.innerText="حدث خطأ في الاتصال"; console.error(err); });
 });
 
-function initTreasury(bk){
-    db.ref("employees").once("value").then(s=>{ s.forEach(e=>employees.push(e.val())); return db.ref("transfers").once("value"); })
-    .then(s=>{ s.forEach(e=>transfers.push(e.val())); filterEmployees(bk); });
-}
-
-function filterEmployees(bk){
-    let dm=document.getElementById("drawerManager"), rv=document.getElementById("reviewer");
-    employees.filter(e=>e.branch==bk).forEach(emp=>{
-        dm.innerHTML+=`<option>${emp.name}</option>`; rv.innerHTML+=`<option>${emp.name}</option>`;
+function initTreasury(branchKey){
+    db.ref("employees").once("value").then(snap=>{
+        employees=[];
+        snap.forEach(e=>{let v=e.val(); if(v) employees.push(v);});
+        return db.ref("transfers").once("value");
+    }).then(snap=>{
+        transfers=[];
+        snap.forEach(e=>{let v=e.val(); if(v) transfers.push(v);});
+        filterEmployees(branchKey);
     });
 }
 
+function filterEmployees(branchKey){
+    drawerManager.innerHTML=""; reviewer.innerHTML="";
+    employees.filter(e=>e.branch==branchKey).forEach(emp=>{
+        drawerManager.innerHTML+=`<option>${emp.name}</option>`;
+        reviewer.innerHTML+=`<option>${emp.name}</option>`;
+    });
+}
+
+let popup=document.getElementById("popup");
+let mobileSelect=document.getElementById("mobileSelect");
+let nameField=document.getElementById("nameField");
+let amount=document.getElementById("amount");
+let note=document.getElementById("note");
+let user=document.getElementById("user");
+
 window.openPopup=function(m){
-    mode=m; document.getElementById("popup").style.display="flex";
+    mode=m;
+    popup.style.display="flex";
+    document.getElementById("popupTitle").innerText = 
+        m=="insta"?"إضافة انستا":m=="wallet"?"إضافة محفظة":m=="visa"?"إضافة باتش فيزا":m=="purchase"?"إضافة مشتريات":"إضافة مصروفات";
+    
     document.getElementById("standardFields").style.display = (m=="visa") ? "none" : "block";
     document.getElementById("transferFields").style.display = (m=="insta" || m=="wallet") ? "block" : "none";
     document.getElementById("visaFields").style.display = (m=="visa") ? "block" : "none";
     document.getElementById("noteFields").style.display = (m=="purchase" || m=="expense") ? "block" : "none";
-    let ms=document.getElementById("mobileSelect"); ms.innerHTML="<option value=''>اختر الرقم</option>";
-    let type = m=="insta"?"انستا":"محفظة";
-    transfers.filter(t=>t.transferType==type).forEach(t=>ms.innerHTML+=`<option>${t.mobile}</option>`);
+    
+    mobileSelect.innerHTML="<option value=''>اختر الرقم</option>";
+    if(m=="insta"){
+        transfers.filter(t => t.transferType === "انستا").forEach(t=>{ 
+            if(t.mobile) mobileSelect.innerHTML+=`<option>${t.mobile}</option>`; 
+        });
+    } else if(m=="wallet"){
+        transfers.filter(t => t.transferType === "محفظة").forEach(t=>{ 
+            if(t.mobile) mobileSelect.innerHTML+=`<option>${t.mobile}</option>`; 
+        });
+    }
+    showName();
 }
 
-window.showName=function(){ let f=transfers.find(t=>t.mobile==document.getElementById("mobileSelect").value); document.getElementById("nameField").value=f?f.name:""; }
-window.closePopup=function(){document.getElementById("popup").style.display="none";}
+window.showName=function(){ let f=transfers.find(t=>t.mobile==mobileSelect.value); nameField.value=f?f.name:""; }
+window.closePopup=function(){popup.style.display="none";}
 
 window.savePopup=function(){
-    let amt = +document.getElementById("amount").value || 0;
-    if(mode=="visa"){
-        let b=document.getElementById("batchNum").value, a=parseFloat(document.getElementById("visaAmount").value), c=parseInt(document.getElementById("visaCount").value);
-        if(b && a>0) visaArr.push({batch:b, amount:a, count:c}); renderVisa();
-    } else if(mode=="insta"){ instaArr.push({amount:amt, mobile:document.getElementById("mobileSelect").value, name:document.getElementById("nameField").value}); renderInsta(); }
-    else if(mode=="wallet"){ walletArr.push({amount:amt, mobile:document.getElementById("mobileSelect").value, name:document.getElementById("nameField").value}); renderWallet(); }
-    else if(mode=="purchase"){ purchases.push({amount:amt, note:document.getElementById("note").value, user:document.getElementById("user").value}); renderPurchases(); }
-    else if(mode=="expense"){ expenses.push({amount:amt, note:document.getElementById("note").value, user:document.getElementById("user").value}); renderExpenses(); }
+    if(mode=="visa") {
+        let b = document.getElementById("batchNum").value.trim();
+        let a = parseFloat(document.getElementById("visaAmount").value) || 0;
+        let c = parseInt(document.getElementById("visaCount").value) || 0;
+        if(!b) { alert("رقم الباتش مطلوب وإجباري"); return; }
+        if(a <= 0) { alert("يرجى إدخال الحسبة بشكل صحيح"); return; }
+        visaArr.push({batch: b, amount: a, count: c});
+        renderVisa();
+    } else {
+        let a = +amount.value || 0;
+        if(mode=="insta"){
+            if(!mobileSelect.value){alert("برجاء اختيار رقم الحساب"); return;}
+            instaArr.push({amount:a,mobile:mobileSelect.value,name:nameField.value}); renderInsta();
+        }
+        if(mode=="wallet"){
+            if(!mobileSelect.value){alert("برجاء اختيار رقم الحساب"); return;}
+            walletArr.push({amount:a,mobile:mobileSelect.value,name:nameField.value}); renderWallet();
+        }
+        if(mode=="purchase"){purchases.push({amount:a,note:note.value,user:user.value}); renderPurchases();}
+        if(mode=="expense"){expenses.push({amount:a,note:note.value,user:user.value}); renderExpenses();}
+    }
+    amount.value=note.value=user.value="";
+    document.getElementById("batchNum").value="";
+    document.getElementById("calcField").value="";
+    document.getElementById("visaAmount").value="";
+    document.getElementById("visaCount").value="";
     closePopup();
 }
 
-function renderInsta(){ let t=0; document.getElementById("instaTable").innerHTML=""; instaArr.forEach((i,idx)=>{ t+=i.amount; document.getElementById("instaTable").innerHTML+=`<tr><td>${i.amount}</td><td>${i.mobile}</td><td><span class="removeBtn" onclick="removeRow('insta',${idx})">-</span></td></tr>`; }); instaTotal.value=t; calc(); }
-function renderWallet(){ let t=0; document.getElementById("walletTable").innerHTML=""; walletArr.forEach((i,idx)=>{ t+=i.amount; document.getElementById("walletTable").innerHTML+=`<tr><td>${i.amount}</td><td>${i.mobile}</td><td><span class="removeBtn" onclick="removeRow('wallet',${idx})">-</span></td></tr>`; }); walletTotal.value=t; calc(); }
-function renderVisa(){ let t=0; document.getElementById("visaTable").innerHTML=""; visaArr.forEach((v,idx)=>{ t+=v.amount; document.getElementById("visaTable").innerHTML+=`<tr><td>${v.batch}</td><td>${v.amount}</td><td><span class="removeBtn" onclick="removeRow('visa',${idx})">-</span></td></tr>`; }); visaTotal.value=t; calc(); }
-function renderPurchases(){ let t=0; document.getElementById("purchaseTable").innerHTML=""; purchases.forEach((p,idx)=>{ t+=p.amount; document.getElementById("purchaseTable").innerHTML+=`<tr><td>${p.amount}</td><td>${p.note}</td><td><span class="removeBtn" onclick="removeRow('purchase',${idx})">-</span></td></tr>`; }); document.getElementById("pTotal").value=t; }
-function renderExpenses(){ let t=0; document.getElementById("expenseTable").innerHTML=""; expenses.forEach((e,idx)=>{ t+=e.amount; document.getElementById("expenseTable").innerHTML+=`<tr><td>${e.amount}</td><td>${e.note}</td><td><span class="removeBtn" onclick="removeRow('expense',${idx})">-</span></td></tr>`; }); document.getElementById("eTotal").value=t; }
+function renderInsta(){ 
+    let t=0; instaTable.innerHTML=""; 
+    instaArr.forEach((i,idx)=>{ 
+        t+=i.amount; 
+        instaTable.innerHTML+=`<tr><td>${i.amount}</td><td>${i.mobile}</td><td>${i.name}</td><td><span class="removeBtn" onclick="removeRow('insta',${idx})">-</span></td></tr>`; 
+    }); 
+    instaTotal.value=t; 
+    document.getElementById("instaSummary").innerText = `إجمالي انستا: ${t.toFixed(2)} | العمليات: ${instaArr.length}`;
+    calc(); 
+}
 
-window.removeRow=(t,i)=>{ if(t=='insta'){instaArr.splice(i,1);renderInsta();} if(t=='wallet'){walletArr.splice(i,1);renderWallet();} if(t=='visa'){visaArr.splice(i,1);renderVisa();} if(t=='purchase'){purchases.splice(i,1);renderPurchases();} if(t=='expense'){expenses.splice(i,1);renderExpenses();} }
+function renderWallet(){ 
+    let t=0; walletTable.innerHTML=""; 
+    walletArr.forEach((i,idx)=>{ 
+        t+=i.amount; 
+        walletTable.innerHTML+=`<tr><td>${i.amount}</td><td>${i.mobile}</td><td>${i.name}</td><td><span class="removeBtn" onclick="removeRow('wallet',${idx})">-</span></td></tr>`; 
+    }); 
+    walletTotal.value=t; 
+    document.getElementById("walletSummary").innerText = `إجمالي المحفظة: ${t.toFixed(2)} | العمليات: ${walletArr.length}`;
+    calc(); 
+}
+
+function renderVisa(){ 
+    let totalAmt=0, totalCount=0; 
+    visaTable.innerHTML=""; 
+    visaArr.forEach((v,idx)=>{ 
+        totalAmt += v.amount; totalCount += v.count; 
+        visaTable.innerHTML+=`<tr><td>${v.batch}</td><td>${v.amount}</td><td>${v.count}</td><td><span class="removeBtn" onclick="removeRow('visa',${idx})">-</span></td></tr>`; 
+    }); 
+    visaTotal.value = totalAmt; 
+    document.getElementById("visaSummary").innerText = `إجمالي الفيزا: ${totalAmt} | العمليات: ${totalCount} | الباتشات: ${visaArr.length}`;
+    calc(); 
+}
+
+function renderPurchases(){ 
+    let t=0; purchaseTable.innerHTML=""; 
+    purchases.forEach((p,idx)=>{ 
+        t+=p.amount; 
+        purchaseTable.innerHTML+=`<tr><td>${p.amount}</td><td>${p.note}</td><td>${p.user}</td><td><span class="removeBtn" onclick="removeRow('purchase',${idx})">-</span></td></tr>`; 
+    }); 
+    pTotal.value=t;
+}
+
+function renderExpenses(){ 
+    let t=0; expenseTable.innerHTML=""; 
+    expenses.forEach((e,idx)=>{ 
+        t+=e.amount; 
+        expenseTable.innerHTML+=`<tr><td>${e.amount}</td><td>${e.note}</td><td>${e.user}</td><td><span class="removeBtn" onclick="removeRow('expense',${idx})">-</span></td></tr>`; 
+    }); 
+    eTotal.value=t;
+}
+
+window.removeRow = function(type, idx) {
+    if(type=='insta') { instaArr.splice(idx,1); renderInsta(); }
+    if(type=='wallet') { walletArr.splice(idx,1); renderWallet(); }
+    if(type=='visa') { visaArr.splice(idx,1); renderVisa(); }
+    if(type=='purchase') { purchases.splice(idx,1); renderPurchases(); }
+    if(type=='expense') { expenses.splice(idx,1); renderExpenses(); }
+}
 
 function calc(){
     total.value=((+cash.value||0)+(+instaTotal.value||0)+(+walletTotal.value||0)).toFixed(2);
-    diff.value = ((-actual.value||0) - (-total.value||0)).toFixed(2);
+    let diffVal = (+actual.value||0) - (+total.value||0);
+    diff.value = diffVal.toFixed(2);
 }
 
 window.saveData=function(){
-    if(!dateInput.value || !document.getElementById("drawer").value || !cash.value || !actual.value) { alert("يرجى ملء كافة الحقول الإجبارية"); return; }
-    lastSavedData={
-        branchName:branchSelect.options[0].text, date:dateInput.value, day:dayInput.value, drawer:document.getElementById("drawer").value,
-        cash:cash.value, insta:instaTotal.value, wallet:walletTotal.value, visa:visaTotal.value, 
-        total:total.value, actual:actual.value, diff:diff.value,
-        manager: document.getElementById("drawerManager").value,
-        pTotal: document.getElementById("pTotal").value || 0,
-        eTotal: document.getElementById("eTotal").value || 0
+    if(!dateInput.value){ alert("الرجاء اختيار تاريخ اليوم أولاً"); return; }
+    if(!drawer.value){ alert("الرجاء إدخال رقم الدرج"); return; }
+    if(!cash.value || cash.value === "") { alert("يجب إدخال قيمة النقدية (Cash)"); return; }
+    if(!actual.value || actual.value === "") { alert("يجب إدخال القيمة الفعلية (Actual)"); return; }
+
+    let treasuryNum=drawer.value;
+    let data={
+        branchKey:branchSelect.value,
+        branchName:branchSelect.options[0].text,
+        drawerManager:drawerManager.value,
+        reviewer:reviewer.value,
+        date:dateInput.value,
+        day:dayInput.value,
+        drawer:drawer.value,
+        cash:+cash.value||0,
+        insta:instaArr,
+        wallet:walletArr,
+        visa:visaArr,
+        purchases,
+        expenses,
+        total:total.value,
+        actual:actual.value,
+        diff:diff.value,
+        timestamp: new Date().getTime()
     };
-    db.ref("treasury").push({...lastSavedData, timestamp: Date.now()}).then(()=>{
-        document.getElementById("successDrawer").innerText = "رقم الدرج: " + lastSavedData.drawer;
+
+    db.ref("treasury").push(data)
+    .then(()=>{
+        // تجهيز بيانات الريسيت
+        document.getElementById("r-day").innerText = data.day;
+        document.getElementById("r-date").innerText = data.date;
+        document.getElementById("r-drawer").innerText = data.drawer;
+        document.getElementById("r-cash").innerText = data.cash;
+        document.getElementById("r-insta").innerText = (instaArr.reduce((s,i)=>s+i.amount,0)).toFixed(2);
+        document.getElementById("r-wallet").innerText = (walletArr.reduce((s,i)=>s+i.amount,0)).toFixed(2);
+        document.getElementById("r-visa").innerText = (visaArr.reduce((s,i)=>s+i.amount,0)).toFixed(2);
+        document.getElementById("r-actual").innerText = data.actual;
+        document.getElementById("r-total").innerText = data.total;
+        document.getElementById("r-diff").innerText = data.diff;
+        document.getElementById("r-manager").innerText = data.drawerManager;
+        document.getElementById("r-reviewer").innerText = data.reviewer;
+        document.getElementById("r-print-time").innerText = new Date().toLocaleString('ar-EG');
+
+        // جدول المشتريات في الريسيت
+        let rpBody = document.getElementById("r-purchases-body");
+        rpBody.innerHTML = "";
+        purchases.forEach(p => {
+            rpBody.innerHTML += `<tr><td>${p.amount}</td><td>${p.note}</td><td>${p.user}</td></tr>`;
+        });
+        document.getElementById("r-p-total").innerText = pTotal.value;
+
+        // جدول الفيزا في الريسيت
+        let rvBody = document.getElementById("r-visa-body");
+        rvBody.innerHTML = "";
+        let vSum = 0;
+        visaArr.forEach(v => {
+            vSum += v.amount;
+            rvBody.innerHTML += `<tr><td>${v.batch}</td><td>${v.amount}</td><td>${v.count}</td></tr>`;
+        });
+        document.getElementById("r-v-total").innerText = vSum.toFixed(2);
+
+        document.getElementById("successDrawer").innerText = "رقم الدرج: " + treasuryNum;
         document.getElementById("successPopup").style.display = "flex";
-    });
+    })
+    .catch(err=>{ alert("حدث خطأ أثناء الحفظ"); console.error(err); });
 }
 
-window.printReceipt=function(){
-    if(!lastSavedData) return;
-    let html = `
-    <table class="receipt-table">
-        <tr><td>التاريخ:</td><td>${lastSavedData.date}</td></tr>
-        <tr><td>اليوم:</td><td>${lastSavedData.day}</td></tr>
-        <tr><td>الفرع:</td><td>${lastSavedData.branchName}</td></tr>
-        <tr><td>الدرج:</td><td>${lastSavedData.drawer}</td></tr>
-        <tr><td>المسؤول:</td><td>${lastSavedData.manager}</td></tr>
-    </table>
-    <div class="receipt-divider"></div>
-    <table class="receipt-table">
-        <tr><td>نقدية (Cash):</td><td>${lastSavedData.cash}</td></tr>
-        <tr><td>انستا باي:</td><td>${lastSavedData.insta}</td></tr>
-        <tr><td>محفظة:</td><td>${lastSavedData.wallet}</td></tr>
-        <tr><td>فيزا:</td><td>${lastSavedData.visa}</td></tr>
-        <tr style="font-size:14px;"><td>الإجمالي المحسوب:</td><td>${lastSavedData.total}</td></tr>
-        <tr style="font-size:14px;"><td>الإجمالي الفعلي:</td><td>${lastSavedData.actual}</td></tr>
-    </table>
-    <div class="receipt-divider"></div>
-    <table class="receipt-table">
-        <tr><td>العجز / الزيادة:</td><td>${lastSavedData.diff}</td></tr>
-    </table>
-    <div class="receipt-divider"></div>
-    <table class="receipt-table">
-        <tr><td>إجمالي المشتريات:</td><td>${lastSavedData.pTotal}</td></tr>
-        <tr><td>إجمالي المصروفات:</td><td>${lastSavedData.eTotal}</td></tr>
-    </table>
-    `;
-    document.getElementById("print-content").innerHTML = html;
+window.printReceipt = function() {
     window.print();
 }
+
 });
 </script>
 </body>
 </html>
-
