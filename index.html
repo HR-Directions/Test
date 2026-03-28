@@ -1,264 +1,459 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1.1 تسجيل الخزينة - مطور</title>
-<style>
-body{font-family:Tahoma;background:#eef2f7;margin:0;}
-.container{max-width:1100px;margin:auto;padding:15px;display:none;}
-.card{background:#fff;padding:15px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);margin-bottom:15px;}
-h3, h4{text-align:center;margin-bottom:15px;color:#2c3e50;}
-table{width:100%;border-collapse:collapse;margin-bottom:10px;}
-th,td{padding:8px;text-align:center;border:1px solid #ccc;}
-th{background:#f8f9fa;}
-input,select{width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;text-align:center;box-sizing: border-box;}
-button{padding:8px 15px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;}
-.add{background:#27ae60;color:#fff;}
-.save{background:#2980b9;color:#fff;flex:2;}
-.report-btn{background:#e67e22;color:#fff;text-decoration:none;display:inline-block;padding:8px 15px;border-radius:6px;flex:1;text-align:center;}
-.total{background:#f1f1f1;font-weight:bold}
-.flex{display:flex;gap:15px;flex-wrap:wrap;}
-.flex > div{flex:1;min-width:300px;}
-.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:100;}
-.box{background:#fff;padding:20px;width:320px;border-radius:10px;text-align:center;box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
-.box input {margin-bottom: 10px;}
-.removeBtn{background:#e74c3c;color:#fff;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:12px;}
-.footer-summary {font-size: 13px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px; font-weight: bold; color: #2c3e50;}
-.btn-group {display:flex; gap:10px; margin-top:15px;}
-.success-icon {font-size: 40px; color: #27ae60; margin-bottom: 10px;}
-@media(max-width:800px){.flex{flex-direction:column;}}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الخزينة - مراجعة كاملة v1.7.5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; }
+        
+        #loginOverlay {
+            position: fixed;
+            inset: 0;
+            background: #f1f5f9;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
-/* استايل الريسيت للطباعة */
-#receipt-print {
-    display: none;
-    width: 80mm;
-    background: #fff;
-    padding: 5px;
-    font-family: 'Arial', sans-serif;
-    color: #000;
-}
-.rp-header { text-align: center; position: relative; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px; }
-.rp-header h2 { margin: 0; font-size: 24px; font-weight: bold; }
-.rp-header p { margin: 0; font-size: 14px; font-weight: bold; }
-.logo-placeholder { font-weight: bold; font-size: 20px; border: 2px solid #000; display: inline-block; padding: 5px; border-radius: 50%; margin-bottom: 5px; }
+        /* نافذة التفاصيل المنبثقة (Popup) */
+        #detailsModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #modalContainer {
+            background: white;
+            width: 100%;
+            max-width: 1100px;
+            max-height: 85vh;
+            border-radius: 2.5rem;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+        }
 
-.rp-top-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-.rp-top-table td { border: 1px solid #000; padding: 4px; font-size: 12px; font-weight: bold; background: #f0f0f0; }
+        /* تنسيق الطباعة الحرارية 80mm */
+        #thermalArea {
+            display: none;
+            width: 72mm;
+            background: white;
+            padding: 0;
+            margin: 0;
+            color: black;
+        }
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        .receipt-table th, .receipt-table td {
+            border: 1px solid #000;
+            padding: 4px 2px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .print-header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .header-logo-img { width: 60px; height: 60px; margin: 0 auto 5px; display: block; }
 
-.rp-main-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-.rp-main-table th, .rp-main-table td { border: 1px solid #000; padding: 5px; font-size: 13px; font-weight: bold; text-align: center; }
-.rp-main-table th { background: #e0e0e0; }
+        @media print {
+            @page { size: 80mm auto; margin: 0; }
+            body * { visibility: hidden; }
+            #thermalArea, #thermalArea * { visibility: visible; }
+            #thermalArea {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 74mm;
+                padding: 2mm;
+            }
+        }
 
-.rp-section-title { text-align: center; font-weight: bold; margin: 10px 0 5px; font-size: 14px; border-bottom: 1px dashed #000; }
-.rp-footer { margin-top: 15px; font-size: 12px; font-weight: bold; border-top: 2px solid #000; padding-top: 5px; }
-
-@media print {
-    body * { visibility: hidden; }
-    #receipt-print, #receipt-print * { visibility: visible; }
-    #receipt-print { display: block !important; position: absolute; left: 0; top: 0; width: 80mm; }
-}
-</style>
+        .checkbox-custom { width: 24px; height: 24px; cursor: pointer; accent-color: #2563eb; }
+        .hover-row:hover { background-color: #f8fafc; cursor: pointer; }
+        
+        /* انيميشن الدخول للمنبثقة */
+        .modal-animate { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body>
+<body class="p-4 md:p-6 pb-32">
 
-<!-- تسجيل الدخول -->
-<div class="popup" id="loginPopup" style="display:flex;">
-  <div class="box">
-    <h3>تسجيل الدخول</h3>
-    <input id="loginCode" placeholder="كود الفرع">
-    <input type="password" id="loginPassword" placeholder="الرقم السري">
-    <br><br>
-    <button id="loginBtn" class="save">تسجيل الدخول</button>
-    <p id="loginError" style="color:red;"></p>
-  </div>
-</div>
-
-<!-- الواجهة الرئيسية -->
-<div class="container" id="mainContainer">
-<h3>💰 تسجيل الخزينة</h3>
-<div class="card">
-<table>
-<tr>
-<td>الفرع <select id="branch"></select></td>
-<td>التاريخ <span style="color:red">*</span> <input type="date" id="date"></td>
-</tr>
-<tr>
-<td>اليوم <input id="day" readonly placeholder="سيظهر تلقائياً"></td>
-<td>رقم الدرج <input id="drawer"></td>
-</tr>
-</table>
-</div>
-
-<div class="card">
-<table>
-<tr><th>الحركة</th><th>المبلغ</th><th>الإجمالي</th></tr>
-<tr><td>النقدية <span style="color:red">*</span></td><td><input id="cash" oninput="convertNumber(this);calc()" placeholder="إجباري"></td><td>-</td></tr>
-<tr><td>مبيعات انستا</td><td><button class="add" onclick="openPopup('insta')">+ إضافة</button></td><td><input id="instaTotal" class="total" readonly></td></tr>
-<tr><td>مبيعات محفظة</td><td><button class="add" onclick="openPopup('wallet')">+ إضافة</button></td><td><input id="walletTotal" class="total" readonly></td></tr>
-<tr><td>مبيعات فيزا</td><td><button class="add" onclick="openPopup('visa')">+ إضافة</button></td><td><input id="visaTotal" class="total" readonly></td></tr>
-<tr><td>الإجمالي</td><td colspan="2"><input id="total" class="total" readonly></td></tr>
-<tr><td>فعلي <span style="color:red">*</span></td><td colspan="2"><input id="actual" oninput="convertNumber(this);calc()" placeholder="إجباري"></td></tr>
-<tr><td>العجز / الزيادة</td><td colspan="2"><input id="diff" class="total" readonly></td></tr>
-</table>
-</div>
-
-<div class="flex">
-<div class="card">
-<h4>انستا</h4>
-<table><thead><tr><th>المبلغ</th><th>الرقم</th><th>الاسم</th><th>-</th></tr></thead><tbody id="instaTable"></tbody></table>
-<div class="footer-summary" id="instaSummary">إجمالي انستا: 0 | العمليات: 0</div>
-</div>
-<div class="card">
-<h4>محفظة</h4>
-<table><thead><tr><th>المبلغ</th><th>الرقم</th><th>الاسم</th><th>-</th></tr></thead><tbody id="walletTable"></tbody></table>
-<div class="footer-summary" id="walletSummary">إجمالي المحفظة: 0 | العمليات: 0</div>
-</div>
-<div class="card">
-<h4>فيزا</h4>
-<table><thead><tr><th>الباتش</th><th>المبلغ</th><th>العمليات</th><th>-</th></tr></thead><tbody id="visaTable"></tbody></table>
-<div class="footer-summary" id="visaSummary">إجمالي الفيزا: 0 | العمليات: 0 | الباتشات: 0</div>
-</div>
-</div>
-
-<div class="flex">
-<div class="card">
-<h4>المشتريات</h4>
-<button class="add" onclick="openPopup('purchase')">+ إضافة</button>
-<table><tbody id="purchaseTable"></tbody></table>
-الإجمالي <input id="pTotal" readonly>
-</div>
-<div class="card">
-<h4>المصروفات</h4>
-<button class="add" onclick="openPopup('expense')">+ إضافة</button>
-<table><tbody id="expenseTable"></tbody></table>
-الإجمالي <input id="eTotal" readonly>
-</div>
-</div>
-
-<div class="card">
-<table><tr><td>مسؤول الدرج <select id="drawerManager"></select></td><td>المراجع <select id="reviewer"></select></td></tr></table>
-<div class="btn-group">
-    <button class="save" onclick="saveData()">💾 حفظ البيانات</button>
-    <a href="https://hr-directions.github.io/Shift-review-/" target="_blank" class="report-btn">📋 تقرير اليوم</a>
-</div>
-</div>
-</div>
-
-<!-- popup إضافة -->
-<div class="popup" id="popup">
-<div class="box">
-<h4 id="popupTitle">إضافة</h4>
-<div id="standardFields"><input id="amount" placeholder="المبلغ" oninput="convertNumber(this)"></div>
-<div id="transferFields" style="display:none"><select id="mobileSelect" onchange="showName()"></select><input id="nameField" placeholder="الاسم" readonly></div>
-<div id="visaFields" style="display:none"><input id="batchNum" placeholder="رقم الباتش *"><input id="calcField" placeholder="الحسبة (مثال: 10+20)" oninput="handleVisaCalc(this)"><div style="display:flex; gap:5px;"><input id="visaAmount" placeholder="الإجمالي" readonly style="background:#eee"><input id="visaCount" placeholder="العدد" readonly style="background:#eee"></div></div>
-<div id="noteFields" style="display:none"><input id="note" placeholder="البيان / الترحيلة"><input id="user" placeholder="المسؤول"></div>
-<div class="btn-group"><button class="add" onclick="savePopup()">حفظ</button><button style="background:#95a5a6; color:#fff;" onclick="closePopup()">إلغاء</button></div>
-</div>
-</div>
-
-<!-- نافذة النجاح -->
-<div class="popup" id="successPopup">
-<div class="box">
-<div class="success-icon">✅</div>
-<h3 id="successMsg">تم الحفظ بنجاح</h3>
-<p id="successDrawer"></p>
-<div class="btn-group" style="flex-direction: column;">
-    <button style="background:#2980b9; color:#fff; width: 100%; padding: 10px; border-radius:6px; cursor:pointer;" onclick="window.print()">🖨️ طباعة ريسيت التسليم</button>
-    <button style="background:#2c3e50; color:#fff; width: 100%; margin-top: 10px;" onclick="location.reload()">تسجيل جديد</button>
-</div>
-</div>
-</div>
-
-<!-- ريسيت الطباعة المخفي -->
-<div id="receipt-print">
-    <div class="rp-header">
-        <div class="logo-placeholder">W</div>
-        <h2>ولاء</h2>
-        <p>تقرير تسليم وردية</p>
-    </div>
-    
-    <table class="rp-top-table">
-        <tr><td>اليوم: <span id="rp-day"></span></td><td>التاريخ: <span id="rp-date"></span></td></tr>
-        <tr><td colspan="2">الدرج: #<span id="rp-drawer"></span></td></tr>
-    </table>
-
-    <table class="rp-main-table">
-        <thead><tr><th>البيان</th><th>القيمة</th></tr></thead>
-        <tbody>
-            <tr><td>إجمالي الكاش</td><td id="rp-cash"></td></tr>
-            <tr><td>انستا باي</td><td id="rp-insta"></td></tr>
-            <tr><td>محافظ</td><td id="rp-wallet"></td></tr>
-            <tr><td>فيزا مبيعات</td><td id="rp-visa"></td></tr>
-            <tr style="background:#eee"><td>المبلغ الفعلي</td><td id="rp-actual"></td></tr>
-            <tr style="background:#eee"><td>إجمالي الحساب</td><td id="rp-total"></td></tr>
-            <tr style="background:#eee"><td>الفرق</td><td id="rp-diff"></td></tr>
-        </tbody>
-    </table>
-
-    <div id="sec-purchases" style="display:none">
-        <div class="rp-section-title">-- تفاصيل المشتريات --</div>
-        <table class="rp-main-table">
-            <thead><tr><th>مبلغ</th><th>البيان</th><th>المستلم</th></tr></thead>
-            <tbody id="rp-p-body"></tbody>
-            <tfoot><tr style="background:#eee"><td colspan="2">إجمالي</td><td id="rp-p-total"></td></tr></tfoot>
-        </table>
+    <!-- شاشة تسجيل الدخول -->
+    <div id="loginOverlay">
+        <div class="bg-white p-8 rounded-[3rem] shadow-2xl w-full max-w-md border border-slate-200">
+            <div class="text-center mb-8">
+                <div class="bg-blue-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl text-white text-3xl">🛡️</div>
+                <h2 class="text-3xl font-black text-slate-800 tracking-tight">بوابة المراجعة</h2>
+                <p class="text-slate-400 font-bold text-sm">نظام إدارة الفروع v1.7.5</p>
+            </div>
+            <form id="loginForm" class="space-y-4">
+                <input type="text" id="loginCode" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none font-bold text-center focus:border-blue-600 transition-all" placeholder="كود المستخدم">
+                <input type="password" id="loginPass" required class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none font-bold text-center focus:border-blue-600 transition-all" placeholder="كلمة المرور">
+                <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 transition-all active:scale-95 text-lg">دخول للنظام</button>
+                <div id="loginStatus" class="text-center text-xs font-black mt-3 hidden"></div>
+            </form>
+        </div>
     </div>
 
-    <div id="sec-visa" style="display:none">
-        <div class="rp-section-title">-- تفاصيل الفيزا --</div>
-        <table class="rp-main-table">
-            <thead><tr><th>باتش</th><th>قيمة</th><th>ع</th></tr></thead>
-            <tbody id="rp-v-body"></tbody>
-            <tfoot><tr style="background:#eee"><td colspan="2">إجمالي</td><td id="rp-v-total"></td></tr></tfoot>
-        </table>
+    <!-- المحتوى الرئيسي -->
+    <div id="mainContent" class="hidden max-w-7xl mx-auto no-print">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div class="text-center md:text-right">
+                <h1 class="text-4xl font-black text-slate-900 tracking-tighter">لوحة التحكم المركزية</h1>
+                <p class="text-slate-500 font-bold text-sm mt-1 uppercase">مرحباً بك: <span id="userNameDisplay" class="text-blue-600">---</span></p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="fetchData()" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 hover:-translate-y-1 transition-all">تحديث المزامنة 🔄</button>
+                <button onclick="logout()" class="bg-white border border-slate-200 text-red-600 px-5 py-4 rounded-2xl font-bold text-sm hover:bg-red-50 transition-all">خروج</button>
+            </div>
+        </header>
+
+        <!-- كروت الإحصائيات -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border-b-4 border-blue-600">
+                <span class="text-slate-400 text-xs font-black">إجمالي نقدية الكاش</span>
+                <h2 id="stCash" class="text-3xl font-black text-slate-900 mt-2">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border-b-4 border-emerald-500">
+                <span class="text-slate-400 text-xs font-black uppercase">تحويلات انستا باي</span>
+                <div class="flex justify-between items-center mt-2">
+                    <h2 id="stInsta" class="text-3xl font-black text-slate-900">0</h2>
+                    <span id="stInstaCount" class="bg-emerald-100 text-emerald-700 px-4 py-1 rounded-full text-xs font-black">0 عمليات</span>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border-b-4 border-orange-500">
+                <span class="text-slate-400 text-xs font-black">مدفوعات فيزا</span>
+                <h2 id="stVisa" class="text-3xl font-black text-slate-900 mt-2">0</h2>
+            </div>
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border-b-4 border-purple-500">
+                <span class="text-slate-400 text-xs font-black">إجمالي المحافظ</span>
+                <h2 id="stWallet" class="text-3xl font-black text-slate-900 mt-2">0</h2>
+            </div>
+        </div>
+
+        <!-- فلاتر البحث المتقدمة -->
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm mb-8 grid grid-cols-1 md:grid-cols-4 gap-6 items-end border border-slate-100">
+            <div id="branchFilterBox">
+                <label class="block text-xs font-black text-slate-500 mb-2">تصفية حسب الفرع</label>
+                <select id="fBranch" class="w-full bg-slate-50 border-2 border-slate-100 p-3.5 rounded-2xl outline-none font-bold focus:border-blue-500 transition-all appearance-none">
+                    <option value="">جميع الفروع (جاري التحميل...)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-black text-slate-500 mb-2">تاريخ الوردية</label>
+                <input type="date" id="fDate" class="w-full bg-slate-50 border-2 border-slate-100 p-3.5 rounded-2xl outline-none font-bold focus:border-blue-500 transition-all">
+            </div>
+            <div class="md:w-32">
+                <label class="block text-xs font-black text-slate-500 mb-2 text-center">رقم الدرج</label>
+                <input type="number" id="fDrawer" placeholder="الكل" class="w-full bg-slate-50 border-2 border-slate-100 p-3.5 rounded-2xl outline-none font-bold text-center focus:border-blue-500 transition-all">
+            </div>
+            <button onclick="fetchData()" class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-black hover:bg-black transition-all shadow-xl text-lg">تطبيق الفلاتر</button>
+        </div>
+
+        <!-- جدول البيانات -->
+        <div class="bg-white rounded-[2.5rem] shadow-sm overflow-hidden border border-slate-100">
+            <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse">
+                    <thead class="bg-slate-50 text-slate-400 text-xs font-black border-b border-slate-100">
+                        <tr>
+                            <th class="p-6 text-center"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" class="checkbox-custom"></th>
+                            <th class="p-6">رقم الدرج</th>
+                            <th class="p-6">الفرع</th>
+                            <th class="p-6">التاريخ</th>
+                            <th class="p-6">نقدية الكاش</th>
+                            <th class="p-6">إجمالي الإيراد</th>
+                            <th class="p-6">العجز / الزيادة</th>
+                            <th class="p-6 text-center">خيارات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mainTableBody" class="divide-y divide-slate-100 font-bold text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <div class="rp-footer">
-        <div>المسؤول: <span id="rp-manager"></span></div>
-        <div>المراجع: <span id="rp-reviewer"></span></div>
-        <div style="text-align:center; font-size:10px; margin-top:5px;">النظام الموحد - مطور بواسطة ولاء</div>
+    <!-- النافذة المنبثقة (Modal) -->
+    <div id="detailsModal">
+        <div id="modalContainer" class="modal-animate">
+            <div class="sticky top-0 bg-white border-b border-slate-100 p-8 flex justify-between items-center z-10 rounded-t-[2.5rem]">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900">تفاصيل مراجعة الوردية</h3>
+                    <p id="modalSubTitle" class="text-sm text-blue-600 font-bold mt-1"></p>
+                </div>
+                <button onclick="closeDetails()" class="bg-slate-100 text-slate-600 p-3 px-6 rounded-2xl font-black hover:bg-red-50 hover:text-red-600 transition-all">إغلاق النافذة ✖</button>
+            </div>
+            <div id="detailsContent" class="p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </div>
     </div>
-</div>
+
+    <!-- شريط الإجراءات المجمعة -->
+    <div id="bulkActions" class="hidden fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white p-5 rounded-[2rem] shadow-2xl flex items-center gap-8 z-40 border border-white/10">
+        <span id="selectedCount" class="text-sm font-black text-blue-400 border-l border-white/20 pl-6">0 مختارة</span>
+        <button onclick="generateDailyReport()" class="bg-blue-600 px-10 py-3 rounded-xl text-xs font-black hover:bg-blue-500 transition-all shadow-lg active:scale-95">🖨️ طباعة تقرير مجمع للفروع المختارة</button>
+    </div>
+
+    <!-- منطقة الطباعة الحرارية (مخفية) -->
+    <div id="thermalArea"></div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function(){
-const firebaseConfig={databaseURL:"https://sample-firebase-ai-app-e4260-default-rtdb.firebaseio.com/"};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+    const firebaseConfig = { databaseURL: "https://sample-firebase-ai-app-e4260-default-rtdb.firebaseio.com/" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    const logoUrl = "https://lh3.googleusercontent.com/pw/AP1GczOHV-3gVfsqN_Y3nGe3v3khgZh8jnMiyzrIg6KECReqrTpnHFK4Adt-_QMyqjcqzy4a2XuXO-sHdgygcqRXcBg0jRmhi4K82oIia841B8vVLescBEqAtn2sZrGf5UO8AqKouvByzQKvoXET4XtjA7-t=w2499-h2499-s-no-gm?authuser=0";
+    
+    let currentUser = null;
+    let fetchedRecords = [];
 
-let branchSelect=document.getElementById("branch"), dateInput=document.getElementById("date"), dayInput=document.getElementById("day"), cash=document.getElementById("cash"), instaTotal=document.getElementById("instaTotal"), walletTotal=document.getElementById("walletTotal"), visaTotal=document.getElementById("visaTotal"), total=document.getElementById("total"), actual=document.getElementById("actual"), diff=document.getElementById("diff"), instaTable=document.getElementById("instaTable"), walletTable=document.getElementById("walletTable"), visaTable=document.getElementById("visaTable"), purchaseTable=document.getElementById("purchaseTable"), expenseTable=document.getElementById("expenseTable"), pTotal=document.getElementById("pTotal"), eTotal=document.getElementById("eTotal"), drawerManager=document.getElementById("drawerManager"), reviewer=document.getElementById("reviewer");
+    function clean(val) { return (val === null || val === undefined) ? "" : String(val).trim(); }
 
-let transfers=[], employees=[], instaArr=[], walletArr=[], visaArr=[], purchases=[], expenses=[], mode="";
+    window.onload = () => { 
+        const saved = sessionStorage.getItem('auth_v175');
+        if (saved) { currentUser = JSON.parse(saved); startApp(); }
+        document.getElementById('loginForm').onsubmit = handleLogin;
+    };
 
-window.handleVisaCalc=function(el){ el.value=el.value.replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[۰-۹]/g,d=>d.charCodeAt(0)-1776); let val=el.value; if(!val){ document.getElementById("visaAmount").value=0; document.getElementById("visaCount").value=0; return; } let clean=val.replace(/[^0-9+.]/g,''); let parts=clean.split('+').filter(p=>p!==""); let sum=parts.reduce((a,b)=>a+parseFloat(b||0),0); document.getElementById("visaAmount").value=sum.toFixed(2); document.getElementById("visaCount").value=parts.length; }
-window.convertNumber=function(el){ if(!el)return; el.value=el.value.replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[۰-۹]/g,d=>d.charCodeAt(0)-1776); calc(); }
-dateInput.addEventListener("change",function(){ if(!this.value){dayInput.value="";return;} let d=new Date(this.value); let days=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"]; dayInput.value=days[d.getDay()]; });
+    async function handleLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        const status = document.getElementById('loginStatus');
+        const codeIn = clean(document.getElementById('loginCode').value);
+        const passIn = clean(document.getElementById('loginPass').value);
 
-document.getElementById("loginBtn").onclick=function(){
-    let code=document.getElementById("loginCode").value, pass=document.getElementById("loginPassword").value;
-    db.ref("branches").once("value").then(snap=>{
-        let found=false;
-        snap.forEach(bk=>{ let b=bk.val(); if(b.code==code){ found=true; if(b.password==pass){ document.getElementById("loginPopup").style.display="none"; document.getElementById("mainContainer").style.display="block"; branchSelect.innerHTML=`<option value="${bk.key}">${b.name}</option>`; branchSelect.disabled=true; initTreasury(bk.key); } } });
-    });
-};
+        btn.disabled = true; btn.innerText = "جاري التحقق...";
+        try {
+            const snap = await db.ref("branches").once("value");
+            let userFound = null;
+            snap.forEach(child => {
+                const data = child.val();
+                if (clean(data.code) === codeIn && clean(data.password) === passIn) {
+                    userFound = { name: clean(data.name), type: clean(data.type), code: clean(data.code) };
+                }
+            });
+            if (userFound) {
+                currentUser = userFound;
+                sessionStorage.setItem('auth_v175', JSON.stringify(currentUser));
+                status.innerText = "✅ مرحباً بك مجدداً";
+                status.className = "text-center text-green-600 font-bold block mt-2 animate-pulse";
+                status.classList.remove('hidden');
+                setTimeout(startApp, 600);
+            } else {
+                status.innerText = "❌ الكود أو كلمة المرور غير صحيحة";
+                status.className = "text-center text-red-600 font-bold block mt-2";
+                status.classList.remove('hidden');
+                btn.disabled = false; btn.innerText = "دخول للنظام";
+            }
+        } catch (err) { btn.disabled = false; }
+    }
 
-function initTreasury(bk){ db.ref("employees").once("value").then(s=>{ employees=[]; s.forEach(e=>{let v=e.val(); if(v)employees.push(v);}); return db.ref("transfers").once("value"); }).then(s=>{ transfers=[]; s.forEach(e=>{let v=e.val(); if(v)transfers.push(v);}); filterEmployees(bk); }); }
-function filterEmployees(bk){ drawerManager.innerHTML=""; reviewer.innerHTML=""; employees.filter(e=>e.branch==bk).forEach(emp=>{ drawerManager.innerHTML+=`<option>${emp.name}</option>`; reviewer.innerHTML+=`<option>${emp.name}</option>`; }); }
+    function startApp() {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainContent').classList.remove('hidden');
+        document.getElementById('userNameDisplay').innerText = currentUser.name;
+        loadBranches();
+        fetchData();
+    }
 
-window.openPopup=function(m){ mode=m; document.getElementById("popup").style.display="flex"; document.getElementById("standardFields").style.display=(m=="visa")?"none":"block"; document.getElementById("transferFields").style.display=(m=="insta"||m=="wallet")?"block":"none"; document.getElementById("visaFields").style.display=(m=="visa")?"block":"none"; document.getElementById("noteFields").style.display=(m=="purchase"||m=="expense")?"block":"none"; mobileSelect.innerHTML="<option value=''>اختر الرقم</option>"; if(m=="insta") transfers.filter(t=>t.transferType==="انستا").forEach(t=>{if(t.mobile)mobileSelect.innerHTML+=`<option>${t.mobile}</option>`;}); else if(m=="wallet") transfers.filter(t=>t.transferType==="محفظة").forEach(t=>{if(t.mobile)mobileSelect.innerHTML+=`<option>${t.mobile}</option>`;}); showName(); }
-window.showName=function(){ let f=transfers.find(t=>t.mobile==mobileSelect.value); document.getElementById("nameField").value=f?f.name:""; }
-window.closePopup=function(){document.getElementById("popup").style.display="none";}
+    function logout() { sessionStorage.removeItem('auth_v175'); location.reload(); }
 
-window.savePopup=function(){
-    if(mode=="visa"){ let b=document.getElementById("batchNum").value, a=parseFloat(document.getElementById("visaAmount").value)||0, c=parseInt(document.getElementById("visaCount").value)||0; if(!b){alert("الباتش مطلوب");return;} visaArr.push({batch:b,amount:a,count:c}); renderVisa(); }
-    else { let a=+document.getElementById("amount").value||0; if(mode=="insta"){instaArr.push({amount:a,mobile:mobileSelect.value,name:document.getElementById("nameField").value}); renderInsta();} if(mode=="wallet"){walletArr.push({amount:a,mobile:mobileSelect.value,name:document.getElementById("nameField").value}); renderWallet();} if(mode=="purchase"){purchases.push({amount:a,note:document.getElementById("note").value,user:document.getElementById("user").value}); renderPurchases();} if(mode=="expense"){expenses.push({amount:a,note:document.getElementById("note").value,user:document.getElementById("user").value}); renderExpenses();} }
-    document.getElementById("amount").value=document.getElementById("note").value=document.getElementById("user").value=document.getElementById("batchNum").value=document.getElementById("calcField").value=""; closePopup();
-}
+    // جلب جميع الفروع المسجلة لوضعها في الفلتر
+    function loadBranches() {
+        const sel = document.getElementById("fBranch");
+        sel.innerHTML = `<option value="">جميع الفروع المسجلة</option>`;
+        
+        db.ref("branches").once("value", s => {
+            s.forEach(c => {
+                const b = c.val();
+                if (b.type === "فرع") { // عرض الفروع فقط
+                    const option = document.createElement("option");
+                    option.value = c.key;
+                    option.textContent = b.name;
+                    sel.appendChild(option);
+                }
+            });
+            
+            // إذا كان المستخدم نوعه فرع، نقوم بإخفاء الفلتر واختياره تلقائياً
+            if (currentUser.type === "فرع") {
+                document.getElementById('branchFilterBox').classList.add('hidden');
+                // البحث عن مفتاح الفرع الخاص بالمستخدم الحالي
+                s.forEach(c => {
+                    if (c.val().name === currentUser.name) sel.value = c.key;
+                });
+            }
+        });
+    }
 
-function printSingle(d) { printThermal(d, false); }
+    function sum(arr) { return (!arr || !Array.isArray(arr)) ? 0 : arr.reduce((a, b) => a + (parseFloat(b.amount) || 0), 0); }
+
+    function fetchData() {
+        const body = document.getElementById("mainTableBody");
+        const bF = document.getElementById("fBranch").value;
+        const dF = document.getElementById("fDate").value;
+        const drF = document.getElementById("fDrawer").value;
+        
+        body.innerHTML = `<tr><td colspan="8" class="p-16 text-center text-slate-300 font-bold text-xl">جاري استخراج البيانات من الخادم...</td></tr>`;
+
+        db.ref("treasury").once("value", s => {
+            body.innerHTML = ""; fetchedRecords = [];
+            s.forEach(c => {
+                const item = c.val(); item.key = c.key;
+                if (currentUser.type === "فرع" && item.branchName !== currentUser.name) return;
+                if (bF) {
+                    // مقارنة الكود أو المفتاح لضمان دقة الفلتر
+                    const selectedOption = document.querySelector(`#fBranch option[value="${bF}"]`);
+                    if (selectedOption && item.branchName !== selectedOption.textContent) return;
+                }
+                if (dF && item.date !== dF) return;
+                if (drF && clean(item.drawer) !== drF) return;
+                fetchedRecords.push(item);
+            });
+            
+            fetchedRecords.sort((x, y) => (y.timestamp||0) - (x.timestamp||0));
+
+            let tC=0, tI=0, cI=0, tW=0, tV=0;
+            fetchedRecords.forEach(item => {
+                tC+=(+item.cash||0); tI+=sum(item.insta); cI+=(item.insta||[]).length;
+                tW+=sum(item.wallet); tV+=sum(item.visa);
+
+                const tr = document.createElement("tr");
+                tr.className = "hover-row border-b border-slate-50 transition-all";
+                tr.onclick = (e) => { if(!e.target.classList.contains('row-check') && e.target.tagName !== 'BUTTON') showDetails(item); };
+                tr.innerHTML = `
+                    <td class="p-6 text-center"><input type="checkbox" value="${item.key}" onchange="updateSelectedCount()" class="row-check checkbox-custom"></td>
+                    <td class="p-6 text-slate-900 font-black">${item.drawer || '1'}</td>
+                    <td class="p-6 text-slate-400 font-bold">${item.branchName}</td>
+                    <td class="p-6 text-[11px] font-black">${item.date}</td>
+                    <td class="p-6 text-blue-600 font-black">${(+item.cash||0).toLocaleString()}</td>
+                    <td class="p-6 font-black">${(+item.total||0).toLocaleString()}</td>
+                    <td class="p-6 ${+item.diff < 0 ? 'text-red-500' : 'text-emerald-500'} font-black text-lg">${item.diff}</td>
+                    <td class="p-6 text-center"><button onclick='printSingle(${JSON.stringify(item)})' class="bg-slate-900 text-white px-6 py-2 rounded-2xl text-[11px] font-black hover:bg-blue-600 transition-colors shadow-md">🖨️ طباعة</button></td>
+                `;
+                body.appendChild(tr);
+            });
+            
+            document.getElementById("stCash").innerText = tC.toLocaleString() + " ج.م";
+            document.getElementById("stInsta").innerText = tI.toLocaleString() + " ج.م";
+            document.getElementById("stInstaCount").innerText = cI + " عمليات";
+            document.getElementById("stWallet").innerText = tW.toLocaleString() + " ج.م";
+            document.getElementById("stVisa").innerText = tV.toLocaleString() + " ج.م";
+            
+            if(fetchedRecords.length === 0) {
+                body.innerHTML = `<tr><td colspan="8" class="p-16 text-center text-slate-400 font-bold italic">لا توجد بيانات مطابقة للبحث حالياً</td></tr>`;
+            }
+        });
+    }
+
+    function showDetails(item) {
+        const modal = document.getElementById("detailsModal");
+        const content = document.getElementById("detailsContent");
+        const subTitle = document.getElementById("modalSubTitle");
+        
+        subTitle.innerText = `الفرع: ${item.branchName} | الدرج: ${item.drawer} | تاريخ الوردية: ${item.date}`;
+        modal.style.display = 'flex';
+        
+        content.innerHTML = `
+            ${renderSubTableHTML("عمليات انستا باي", item.insta, 'trans')}
+            ${renderSubTableHTML("المحافظ الإلكترونية", item.wallet, 'trans')}
+            ${renderSubTableHTML("فيزا مبيعات", item.visa, 'visa')}
+            ${renderSubTableHTML("فواتير المشتريات", item.purchases, 'exp')}
+            ${renderSubTableHTML("بند المصروفات", item.expenses, 'exp')}
+            <div class="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-8 rounded-[2rem] flex flex-col justify-center items-center text-center shadow-xl border border-white/10">
+                <span class="text-xs font-bold opacity-70 mb-2 uppercase tracking-widest">إجمالي إيراد الوردية</span>
+                <h4 class="text-4xl font-black">${(+item.total||0).toLocaleString()} <small class="text-sm">ج.م</small></h4>
+                <div class="mt-6 pt-6 border-t border-white/20 w-full flex justify-between text-xs font-bold">
+                    <span>العجز/الزيادة:</span>
+                    <span class="text-lg">${item.diff}</span>
+                </div>
+            </div>
+        `;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDetails() {
+        document.getElementById("detailsModal").style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    window.onclick = (e) => { if (e.target == document.getElementById("detailsModal")) closeDetails(); }
+
+    function renderSubTableHTML(title, arr, type) {
+        if(!arr || arr.length === 0) return `<div class="bg-slate-50 p-8 rounded-[2rem] text-center text-slate-400 text-xs font-bold flex flex-col items-center justify-center border-2 border-dashed border-slate-200"><span>${title}</span><span class="mt-2 text-[10px] opacity-60">لا تـوجـد حـركـات</span></div>`;
+        let h = `<div class="bg-white border border-slate-100 rounded-[2rem] overflow-hidden shadow-sm h-full">
+            <div class="bg-slate-50 text-slate-800 p-4 text-[11px] font-black text-center border-b uppercase tracking-wider">${title}</div>
+            <table class="w-full text-[11px] text-right"><thead><tr class="bg-slate-50/50 border-b text-slate-400">`;
+        if(type==='visa') h += `<th class="p-2">باتش</th><th class="p-2">قيمة</th><th class="p-2">ع</th>`;
+        else if(type==='trans') h += `<th class="p-2">قيمة</th><th class="p-2">الرقم</th><th class="p-2">الاسم</th>`;
+        else h += `<th class="p-2">قيمة</th><th class="p-2">البيان</th><th class="p-2">المستلم</th>`;
+        h += `</tr></thead><tbody>`;
+        arr.forEach(x => {
+            h += `<tr class="border-b last:border-0 hover:bg-slate-50 transition-colors">`;
+            if(type==='visa') h += `<td class="p-3">${x.batch}</td><td class="p-3 font-black">${x.amount}</td><td class="p-3">${x.count}</td>`;
+            else if(type==='trans') h += `<td class="p-3 text-blue-600 font-black">${x.amount}</td><td class="p-3">${x.mobile||''}</td><td class="p-3">${x.name||''}</td>`;
+            else h += `<td class="p-3 text-red-600 font-black">${x.amount}</td><td class="p-3">${x.note||''}</td><td class="p-3">${x.user||''}</td>`;
+            h += `</tr>`;
+        });
+        h += `<tr class="bg-slate-50 font-black"><td class="p-3 text-slate-900">إجمالي البند</td><td colspan="2" class="p-3 text-left text-blue-700">${sum(arr).toLocaleString()}</td></tr></tbody></table></div>`;
+        return h;
+    }
+
+    function toggleSelectAll(master) {
+        document.querySelectorAll(".row-check").forEach(c => c.checked = master.checked);
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const count = document.querySelectorAll(".row-check:checked").length;
+        const bulk = document.getElementById("bulkActions");
+        if(count > 0) { bulk.classList.remove("hidden"); document.getElementById("selectedCount").innerText = `${count} وردية مختارة`; }
+        else { bulk.classList.add("hidden"); }
+    }
+
+    function generateDailyReport() {
+        const selectedKeys = Array.from(document.querySelectorAll(".row-check:checked")).map(c => c.value);
+        const selectedData = fetchedRecords.filter(r => selectedKeys.includes(r.key));
+        if(selectedData.length === 0) return;
+        let agg = {
+            cash: 0, actual: 0, total: 0, diff: 0,
+            insta: [], wallet: [], visa: [], purchases: [], expenses: [],
+            branchNames: new Set(), date: selectedData[0].date, day: selectedData[0].day
+        };
+        selectedData.forEach(d => {
+            agg.cash += (+d.cash||0); agg.actual += (+d.actual||0);
+            agg.total += (+d.total||0); agg.diff += (+d.diff||0);
+            if(d.insta) agg.insta.push(...d.insta);
+            if(d.wallet) agg.wallet.push(...d.wallet);
+            if(d.visa) agg.visa.push(...d.visa);
+            if(d.purchases) agg.purchases.push(...d.purchases);
+            if(d.expenses) agg.expenses.push(...d.expenses);
+            agg.branchNames.add(d.branchName);
+        });
+        printThermal(agg, true);
+    }
+
+    function printSingle(d) { printThermal(d, false); }
 
     function printThermal(d, isAgg) {
         const area = document.getElementById("thermalArea");
@@ -267,74 +462,58 @@ function printSingle(d) { printThermal(d, false); }
         area.innerHTML = `
             <div class="print-header">
                 <img src="${logoUrl}" class="header-logo-img">
-                <div class="header-text-side">
-                    <h2 class="header-branch-name">${branchTitle}</h2>
-                    <div style="font-size:10px; font-weight:bold;">تقرير ${isAgg ? 'يومي مجمع' : 'تسليم وردية'}</div>
-                </div>
+                <h2 style="margin:0; font-size:16px; font-weight:900;">${branchTitle}</h2>
+                <div style="font-size:12px; font-weight:bold;">${isAgg ? 'تقرير مجمع مالي' : 'إيصال مراجعة وردية'}</div>
             </div>
 
-            <!-- تم تعديل هذا السطر ليشمل اليوم بجانب التاريخ والدرج -->
-            <table class="receipt-table" style="margin-bottom:8px; border:none;">
-                <tr style="border:none;">
-                    <td style="border:1.5px solid #000;">اليوم: ${d.day || '---'}</td>
-                    <td style="border:1.5px solid #000;">التاريخ: ${d.date}</td>
-                    <td style="border:1.5px solid #000;">الدرج: ${isAgg ? 'مجمع' : `#${d.drawer}`}</td>
-                </tr>
-            </table>
+            <div style="font-size:11px; font-weight:bold; margin-bottom:5px; border-bottom:1px dashed #000; padding-bottom:5px;">
+                التاريخ: ${d.date} | اليوم: ${d.day || '---'}<br>
+                الدرج: ${isAgg ? 'مجمع فروع' : (d.drawer || '1')} | المراجع: ${currentUser.name}
+            </div>
 
-            <table class="receipt-table" style="font-size:14px;">
-                <tr style="background:#eee"><th>البيان</th><th>القيمة</th></tr>
-                <tr><td>إجمالي الكاش</td><td>${d.cash}</td></tr>
-                <tr><td>انستا باي</td><td>${sum(d.insta)}</td></tr>
-                <tr><td>محافظ</td><td>${sum(d.wallet)}</td></tr>
-                <tr><td>فيزا مبيعات</td><td>${sum(d.visa)}</td></tr>
-                <tr style="background:#f0f0f0; font-size:17px;"><td>المبلغ الفعلي</td><td>${d.actual}</td></tr>
-                <tr><td>إجمالي الحساب</td><td>${d.total}</td></tr>
-                <tr style="color:${+d.diff < 0 ? 'red' : 'green'}"><td>الفرق</td><td>${d.diff}</td></tr>
+            <table class="receipt-table">
+                <tr style="background:#eee"><th>البيان المالي</th><th>القيمة</th></tr>
+                <tr><td>النقدية (Cash)</td><td>${(+d.cash||0).toLocaleString()}</td></tr>
+                <tr><td>انستا باي</td><td>${sum(d.insta).toLocaleString()}</td></tr>
+                <tr><td>المحافظ</td><td>${sum(d.wallet).toLocaleString()}</td></tr>
+                <tr><td>مبيعات فيزا</td><td>${sum(d.visa).toLocaleString()}</td></tr>
+                <tr style="background:#f9f9f9"><td style="font-size:13px">إجمالي الحساب</td><td style="font-size:13px">${(+d.total||0).toLocaleString()}</td></tr>
+                <tr style="background:#f0f0f0"><td>المبلغ الفعلي (POS)</td><td>${(+d.actual||0).toLocaleString()}</td></tr>
+                <tr style="color:${+d.diff < 0 ? 'red' : 'black'}"><td>صافي العجز/الزيادة</td><td>${d.diff}</td></tr>
             </table>
 
             ${renderSubTablePrint("تفاصيل انستا باي", d.insta, 'trans')}
             ${renderSubTablePrint("تفاصيل المحافظ", d.wallet, 'trans')}
-            ${renderSubTablePrint("تفاصيل المشتريات", d.purchases, 'exp')}
-            ${renderSubTablePrint("تفاصيل المصروفات", d.expenses, 'exp')}
-            ${renderSubTablePrint("تفاصيل الفيزا", d.visa, 'visa')}
+            ${renderSubTablePrint("فواتير المشتريات", d.purchases, 'exp')}
+            ${renderSubTablePrint("بند المصروفات", d.expenses, 'exp')}
+            ${renderSubTablePrint("عمليات الفيزا", d.visa, 'visa')}
 
-            <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1.5px solid #000; padding-top:8px; font-size:10px; font-weight:bold;">
-                <div>المسؤول: ${d.drawerManager || '_______'}</div>
-                <div>المراجع: ${d.reviewer || '_______'}</div>
-            </div>
-            
-            <div style="text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #ccc; padding-top:4px;">
-                النظام الموحد - ${new Date().toLocaleString('ar-EG')}
+            <div style="text-align:center; font-size:10px; margin-top:15px; border-top:1px solid #000; padding-top:10px; line-height:1.4">
+                تـمـت المراجعة والاعتماد مـن قبـل الإدارة<br>
+                ${new Date().toLocaleString('ar-EG')}
             </div>
         `;
-        setTimeout(() => { window.print(); }, 300);
+        setTimeout(() => { window.print(); }, 400);
     }
 
     function renderSubTablePrint(title, arr, type) {
         if(!arr || arr.length === 0) return "";
-        let h = `<div style="text-align:center; font-weight:900; margin-top:8px; border-top:1px dashed #000; padding-top:2px; font-size:10px;">-- ${title} --</div>`;
-        h += `<table class="receipt-table"><thead><tr>`;
-        
+        let h = `<div style="text-align:center; font-weight:900; margin-top:10px; font-size:11px; border-top: 1px solid #eee; padding-top:5px;">-- ${title} --</div>`;
+        h += `<table class="receipt-table"><thead><tr style="background:#f5f5f5">`;
         if(type==='visa') h += `<th>باتش</th><th>قيمة</th><th>ع</th>`;
-        else if(type==='trans') h += `<th>مبلغ</th><th>الرقم</th><th>الاسم</th>`;
-        else h += `<th>مبلغ</th><th>البيان</th><th>المستلم</th>`;
-        
+        else if(type==='trans') h += `<th>قيمة</th><th>الرقم</th><th>الاسم</th>`;
+        else h += `<th>قيمة</th><th>البيان</th><th>المستلم</th>`;
         h += `</tr></thead><tbody>`;
         arr.forEach(x => {
             h += `<tr>`;
             if(type==='visa') h += `<td>${x.batch}</td><td>${x.amount}</td><td>${x.count}</td>`;
-            else if(type==='trans') h += `<td>${x.amount}</td><td>${x.mobile||''}</td><td>${x.name||''}</td>`;
-            else h += `<td>${x.amount}</td><td>${x.note||''}</td><td>${x.user||''}</td>`;
+            else if(type==='trans') h += `<td>${x.amount}</td><td>${x.mobile||''}</td><td>${x.name?x.name.substring(0,8):''}</td>`;
+            else h += `<td>${x.amount}</td><td>${x.note?x.note.substring(0,10):''}</td><td>${x.user?x.user.substring(0,8):''}</td>`;
             h += `</tr>`;
         });
-        
-        let totalVal = sum(arr);
-        h += `<tr style="background:#eee"><td>إجمالي</td><td colspan="2">${totalVal}</td></tr>`;
-        
-        h += `</tbody></table>`;
+        h += `<tr style="background:#eee"><td>إجمالي</td><td colspan="2">${sum(arr).toLocaleString()}</td></tr></tbody></table>`;
         return h;
-    } 
+    }
 </script>
 </body>
 </html>
