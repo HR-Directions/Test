@@ -714,8 +714,9 @@ function printThermal(d, isAgg) {
             <table class="receipt-table"><tr><td>${d.day||'---'}</td><td>${d.date}</td><td>${isAgg?'مجمع':'درج '+(d.drawer||1)}</td></tr></table>
             <table class="receipt-table" style="font-size:12px; margin-top:8px;"><tr><td>كاش</td><td>${(+d.cash||0).toLocaleString()}</td></tr><tr><td>انستا/محافظ</td><td>${(sum(d.insta)+sum(d.wallet)).toLocaleString()}</td></tr><tr><td>فيزا</td><td>${sum(d.visa).toLocaleString()}</td></tr><tr style="font-weight:900;"><td>إجمالي</td><td>${(+d.total||0).toLocaleString()}</td></tr><tr style="background:#eee"><td>POS</td><td>${(+d.actual||0).toLocaleString()}</td></tr><tr style="color:${+d.diff<0?'red':'green'}"><td>الفرق</td><td>${d.diff}</td></tr></table>
             <div style="text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #000; padding-top:5px;">المراجع: ${currentUser.name} - ${new Date().toLocaleString('ar-EG')}</div>`;
-        setTimeout(() => window.print(), 300);
+            setTimeout(() => { window.print(); }, 300);
     }
+    
 </script>
 </body>
 </html> 
