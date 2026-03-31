@@ -635,18 +635,58 @@
         document.getElementById("selectedCount").innerText = `${c} سجلات مختارة`;
     }
 
-    function printSingle(d) { printThermalFinal(d, false); }
-    function generateDailyReport() {
-        const keys = Array.from(document.querySelectorAll(".row-check:checked")).map(c => c.value);
-        const sel = allRecords.filter(r => keys.includes(r.key));
-        let agg = { cash:0, actual:0, total:0, diff:0, insta:[], wallet:[], visa:[], purchases:[], expenses:[], bNames: new Set(), date: sel[0].date };
-        sel.forEach(d => {
-            agg.cash += (+d.cash||0); agg.actual += (+d.actual||0); agg.total += (+d.total||0); agg.diff += (+d.diff||0);
-            if(d.insta) agg.insta.push(...d.insta); if(d.wallet) agg.wallet.push(...d.wallet);
-            if(d.visa) agg.visa.push(...d.visa); if(d.purchases) agg.purchases.push(...d.purchases);
-            if(d.expenses) agg.expenses.push(...d.expenses); agg.bNames.add(d.branchName);
-        });
-        printThermalFinal(agg, true);
+    function printSingle(d) { printThermal(d, false); }
+
+    function printThermal(d, isAgg) {
+        const area = document.getElementById("thermalArea");
+        const branchTitle = isAgg ? Array.from(d.branchNames).join(" + ") : d.branchName;
+        
+        area.innerHTML = `
+            <div class="print-header">
+                <img src="${logoUrl}" class="header-logo-img">
+                <div class="header-text-side">
+                    <h2 class="header-branch-name">${branchTitle}</h2>
+                    <div style="font-size:10px; font-weight:bold;">تقرير ${isAgg ? 'يومي مجمع' : 'تسليم درج'}</div>
+                </div>
+            </div>
+
+            <!-- تم تعديل هذا السطر ليشمل اليوم بجانب التاريخ والدرج -->
+            <table class="receipt-table" style="margin-bottom:8px; border:none;">
+                <tr style="border:none;">
+                    <td style="border:1.5px solid #000;">اليوم: ${d.day || '---'}</td>
+                    <td style="border:1.5px solid #000;">التاريخ: ${d.date}</td>
+                    <td style="border:1.5px solid #000;">الدرج: ${isAgg ? 'مجمع' : `${d.drawer}`}</td>
+                </tr>
+            </table>
+
+            <table class="receipt-table" style="font-size:14px;">
+                <tr style="background:#eee"><th>البيان</th><th>القيمة</th></tr>
+                <tr><td>إجمالي الكاش</td><td>${d.cash}</td></tr>
+                <tr><td>انستا باي</td><td>${sum(d.insta)}</td></tr>
+                <tr><td>محافظ</td><td>${sum(d.wallet)}</td></tr>
+                <tr><td>مبيعات فيزا</td><td>${sum(d.visa)}</td></tr>
+                <tr><td>إجمالي الحساب</td><td>${d.total}</td></tr>
+                <tr style="background:#f0f0f0; font-size:17px;"><td>مبلغ pos</td><td>${d.actual}</td></tr>
+                <tr style="color:${+d.diff < 0 ? 'red' : 'green'}"><td>الفرق-/+ </td><td>${d.diff}</td></tr>
+            </table>
+
+            ${renderSubTablePrint("تفاصيل انستا باي", d.insta, 'trans')}
+            ${renderSubTablePrint("تفاصيل المحافظ", d.wallet, 'trans')}
+            ${renderSubTablePrint("تفاصيل المشتريات", d.purchases, 'exp')}
+            ${renderSubTablePrint("تفاصيل المصروفات", d.expenses, 'exp')}
+            ${renderSubTablePrint("تفاصيل الفيزا", d.visa, 'visa')}
+
+            <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1.5px solid #000; padding-top:8px; font-size:10px; font-weight:bold;">
+                <div>المسؤول: ${d.drawerManager || '_______'}</div>
+                <div>المراجع: ${d.reviewer || '_______'}</div>
+            </div>
+            
+            <div style="text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #ccc; padding-top:4px;">
+                النظام الموحد - ${new Date().toLocaleString('ar-EG')}
+            </div>
+        `;
+        setTimeout(() => { window.print(); }, 300);
+    }
     }
 
     function printThermalFinal(d, isAgg) {
