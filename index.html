@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام الرقابة - التتبع التفصيلي</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
@@ -83,6 +84,10 @@
             <div class="flex flex-wrap gap-2 justify-center">
                 <button id="logsBtn" onclick="openLogsModal()" class="hidden bg-slate-900 text-white px-6 py-3 rounded-2xl font-black shadow-lg hover:bg-blue-600 active:scale-95 transition-all flex items-center gap-2">تتبع التغييرات 🔍</button>
                 <button onclick="fetchData()" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg hover:bg-blue-700 active:scale-95 transition-all">تحديث</button>
+                <button onclick="fetchData()" class="bg-blue-600 ...
+                <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg hover:bg-emerald-700 active:scale-95 transition-all">
+تصدير Excel 📊
+                </button>    
                 <button onclick="logout()" class="bg-white text-red-500 border border-red-100 px-4 py-3 rounded-2xl font-black hover:bg-red-50">خروج</button>
             </div>
         </header>
@@ -250,6 +255,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>    
 <script>
     const firebaseConfig = { databaseURL: "https://sample-firebase-ai-app-e4260-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -726,7 +732,39 @@ function printSingle(d) { printThermal(d, false); }
             <div style="text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #000; padding-top:5px;">المراجع: ${currentUser.name} - ${new Date().toLocaleString('ar-EG')}</div>`;
             setTimeout(() => { window.print(); }, 300);
     }
-    
+    function exportToExcel() {
+    const bV = document.getElementById("fBranch").value;
+    const dFrom = document.getElementById("fDateFrom")?.value;
+    const dTo = document.getElementById("fDateTo")?.value;
+    const drV = document.getElementById("fDrawer").value;
+
+    const filtered = allRecords.filter(r => {
+        if (bV && r.branchName !== bV) return false;
+        if (dFrom && r.date < dFrom) return false;
+        if (dTo && r.date > dTo) return false;
+        if (drV && r.drawer != drV) return false;
+        return true;
+    });
+
+    const data = filtered.map(r => ({
+        الفرع: r.branchName,
+        التاريخ: r.date,
+        الدرج: r.drawer,
+        الكاش: r.cash || 0,
+        انستا: sum(r.insta),
+        محافظ: sum(r.wallet),
+        فيزا: sum(r.visa),
+        الإجمالي: r.total || 0,
+        POS: r.actual || 0,
+        الفرق: r.diff || 0
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "التقرير");
+
+    XLSX.writeFile(wb, "تقرير_الخزينة.xlsx");
+    }
 </script>
 </body>
 </html> 
