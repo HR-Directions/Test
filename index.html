@@ -329,7 +329,16 @@
 
     function logout() { sessionStorage.removeItem('audit_auth_system_v9_trace'); location.reload(); }
 
-    function sum(arr) { return (arr || []).reduce((a, c) => a + (parseFloat(c.amount) || 0), 0); }
+    function sum(arr) {
+    return arr ? arr.reduce((a, b) => a + (parseFloat(b.amount) || 0), 0) : 0;
+}
+
+function renderSubTablePrint(title, items, type) {
+    if (!items || items.length === 0) return '';
+    let rows = items.map(i => `<tr><td>${i.name || i.type || i.desc || '---'}</td><td>${i.amount}</td></tr>`).join('');
+    return `<table class="receipt-table" style="margin-top:5px; font-size:12px;"><tr><th colspan="2" style="background:#eee">${title}</th></tr>${rows}</table>`;
+}
+    
 
     function fetchData() {
         db.ref("treasury").once("value", s => {
@@ -635,58 +644,67 @@
         document.getElementById("selectedCount").innerText = `${c} سجلات مختارة`;
     }
 
-    function printSingle(d) { printThermal(d, false); }
+    // 1. الدالة الأولى لتشغيل الطباعة الفردية
+function printSingle(d) { 
+    printThermal(d, false); 
+}
 
-    function printThermal(d, isAgg) {
-        const area = document.getElementById("thermalArea");
-        const branchTitle = isAgg ? Array.from(d.branchNames).join(" + ") : d.branchName;
+// 2. الدالة الأساسية للطباعة الحرارية وتنسيق الفاتورة
+function printThermal(d, isAgg) {
+    const area = document.getElementById("thermalArea");
+    
+    // التوافق مع الكود للعمل بشكل مجمع وفردي
+    const branchTitle = isAgg ? Array.from(d.branchNames || d.bNames || []).join(" + ") : (d.branchName || 'الفرع');
+    
+    area.innerHTML = `
+        <div class="print-header">
+            <img src="${typeof logoUrl !== 'undefined' ? logoUrl : ''}" class="header-logo-img" onerror="this.style.display='none'">
+            <div class="header-text-side">
+                <h2 class="header-branch-name">${branchTitle}</h2>
+                <div style="font-size:10px; font-weight:bold;">تقرير ${isAgg ? 'يومي مجمع' : 'تسليم درج'}</div>
+            </div>
+        </div>
+
+        <!-- تم تعديل هذا السطر ليشمل اليوم بجانب التاريخ والدرج -->
+        <table class="receipt-table" style="margin-bottom:8px; border:none;">
+            <tr style="border:none;">
+                <td style="border:1.5px solid #000;">اليوم: ${d.day || '---'}</td>
+                <td style="border:1.5px solid #000;">التاريخ: ${d.date || '---'}</td>
+                <td style="border:1.5px solid #000;">الدرج: ${isAgg ? 'مجمع' : `${d.drawer || 1}`}</td>
+            </tr>
+        </table>
+
+        <table class="receipt-table" style="font-size:14px;">
+            <tr style="background:#eee"><th>البيان</th><th>القيمة</th></tr>
+            <tr><td>إجمالي الكاش</td><td>${d.cash || 0}</td></tr>
+            <tr><td>انستا باي</td><td>${sum(d.insta)}</td></tr>
+            <tr><td>محافظ</td><td>${sum(d.wallet)}</td></tr>
+            <tr><td>مبيعات فيزا</td><td>${sum(d.visa)}</td></tr>
+            <tr><td style="font-weight:900;">إجمالي الحساب</td><td style="font-weight:900;">${d.total || 0}</td></tr>
+            <tr style="background:#f0f0f0; font-size:17px; font-weight:900;"><td>مبلغ pos</td><td>${d.actual || 0}</td></tr>
+            <tr style="color:${parseFloat(d.diff) < 0 ? 'red' : 'green'}; font-weight:900;"><td>الفرق-/+ </td><td>${d.diff || 0}</td></tr>
+        </table>
+
+        ${renderSubTablePrint("تفاصيل انستا باي", d.insta, 'trans')}
+        ${renderSubTablePrint("تفاصيل المحافظ", d.wallet, 'trans')}
+        ${renderSubTablePrint("تفاصيل المشتريات", d.purchases, 'exp')}
+        ${renderSubTablePrint("تفاصيل المصروفات", d.expenses, 'exp')}
+        ${renderSubTablePrint("تفاصيل الفيزا", d.visa, 'visa')}
+
+        <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1.5px solid #000; padding-top:8px; font-size:10px; font-weight:bold;">
+            <div>المسؤول: ${d.drawerManager || '_______'}</div>
+            <div>المراجع: ${d.reviewer || '_______'}</div>
+        </div>
         
-        area.innerHTML = `
-            <div class="print-header">
-                <img src="${logoUrl}" class="header-logo-img">
-                <div class="header-text-side">
-                    <h2 class="header-branch-name">${branchTitle}</h2>
-                    <div style="font-size:10px; font-weight:bold;">تقرير ${isAgg ? 'يومي مجمع' : 'تسليم درج'}</div>
-                </div>
-            </div>
-
-            <!-- تم تعديل هذا السطر ليشمل اليوم بجانب التاريخ والدرج -->
-            <table class="receipt-table" style="margin-bottom:8px; border:none;">
-                <tr style="border:none;">
-                    <td style="border:1.5px solid #000;">اليوم: ${d.day || '---'}</td>
-                    <td style="border:1.5px solid #000;">التاريخ: ${d.date}</td>
-                    <td style="border:1.5px solid #000;">الدرج: ${isAgg ? 'مجمع' : `${d.drawer}`}</td>
-                </tr>
-            </table>
-
-            <table class="receipt-table" style="font-size:14px;">
-                <tr style="background:#eee"><th>البيان</th><th>القيمة</th></tr>
-                <tr><td>إجمالي الكاش</td><td>${d.cash}</td></tr>
-                <tr><td>انستا باي</td><td>${sum(d.insta)}</td></tr>
-                <tr><td>محافظ</td><td>${sum(d.wallet)}</td></tr>
-                <tr><td>مبيعات فيزا</td><td>${sum(d.visa)}</td></tr>
-                <tr><td>إجمالي الحساب</td><td>${d.total}</td></tr>
-                <tr style="background:#f0f0f0; font-size:17px;"><td>مبلغ pos</td><td>${d.actual}</td></tr>
-                <tr style="color:${+d.diff < 0 ? 'red' : 'green'}"><td>الفرق-/+ </td><td>${d.diff}</td></tr>
-            </table>
-
-            ${renderSubTablePrint("تفاصيل انستا باي", d.insta, 'trans')}
-            ${renderSubTablePrint("تفاصيل المحافظ", d.wallet, 'trans')}
-            ${renderSubTablePrint("تفاصيل المشتريات", d.purchases, 'exp')}
-            ${renderSubTablePrint("تفاصيل المصروفات", d.expenses, 'exp')}
-            ${renderSubTablePrint("تفاصيل الفيزا", d.visa, 'visa')}
-
-            <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1.5px solid #000; padding-top:8px; font-size:10px; font-weight:bold;">
-                <div>المسؤول: ${d.drawerManager || '_______'}</div>
-                <div>المراجع: ${d.reviewer || '_______'}</div>
-            </div>
-            
-            <div style="text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #ccc; padding-top:4px;">
-                النظام الموحد - ${new Date().toLocaleString('ar-EG')}
-            </div>
-        `;
-        setTimeout(() => { window.print(); }, 300);
-    }
+        <div style="text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #ccc; padding-top:4px;">
+            النظام الموحد - ${new Date().toLocaleString('ar-EG')}
+        </div>
+    `;
+    
+    // تأخير بسيط لضمان تحميل وتجهيز الواجهة قبل الطباعة
+    setTimeout(() => { window.print(); }, 300);
+}
+    
     }
 
     function printThermalFinal(d, isAgg) {
