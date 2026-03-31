@@ -203,7 +203,10 @@
                 
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-2 md:grid-cols-5 gap-3">
                     <div><label class="block text-[10px] font-black text-slate-500 mb-1">الفرع</label><input type="text" id="editBranch" readonly class="w-full bg-slate-200 p-2.5 rounded-lg font-bold text-slate-500 text-sm"></div>
-                    <div><label class="block text-[10px] font-black text-slate-500 mb-1">التاريخ</label><input type="date" id="editDate" required class="w-full bg-white border border-slate-300 p-2.5 rounded-lg font-bold text-sm"></div>
+                    <div class="flex gap-2">
+    <input type="date" id="fDateFrom" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none font-black text-center" placeholder="من">
+    <input type="date" id="fDateTo" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none font-black text-center" placeholder="إلى">
+                    </div>
                     <div><label class="block text-[10px] font-black text-slate-500 mb-1">الدرج</label><input type="number" id="editDrawer" required class="w-full bg-white border border-slate-300 p-2.5 rounded-lg font-bold text-center text-sm"></div>
                     <div><label class="block text-[10px] font-black text-blue-500 mb-1">الكاش</label><input type="number" id="editCash" required class="w-full bg-blue-50 border border-blue-200 p-2.5 rounded-lg font-black text-center text-blue-700 text-sm"></div>
                     <div><label class="block text-[10px] font-black text-purple-500 mb-1">مبلغ POS</label><input type="number" id="editActual" required class="w-full bg-purple-50 border border-purple-200 p-2.5 rounded-lg font-black text-center text-purple-700 text-sm"></div>
@@ -384,15 +387,16 @@ function renderSubTablePrint(title, arr, type) {
     }
 
     function applyFilters() {
-        const bV = document.getElementById("fBranch").value;
-        const dV = document.getElementById("fDate").value;
-        const drV = document.getElementById("fDrawer").value;
-        const filtered = allRecords.filter(r => {
-            if (bV && r.branchName !== bV) return false;
-            if (dV && r.date !== dV) return false;
-            if (drV && r.drawer != drV) return false;
-            return true;
-        });
+        const dFrom = document.getElementById("fDateFrom")?.value;
+const dTo = document.getElementById("fDateTo")?.value;
+
+const filtered = allRecords.filter(r => {
+    if (bV && r.branchName !== bV) return false;
+    if (dFrom && r.date < dFrom) return false;
+    if (dTo && r.date > dTo) return false;
+    if (drV && r.drawer != drV) return false;
+    return true;
+});
         renderTable(filtered);
     }
 
