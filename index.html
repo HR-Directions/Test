@@ -333,10 +333,29 @@
     return arr ? arr.reduce((a, b) => a + (parseFloat(b.amount) || 0), 0) : 0;
 }
 
-function renderSubTablePrint(title, items, type) {
-    if (!items || items.length === 0) return '';
-    let rows = items.map(i => `<tr><td>${i.name || i.type || i.desc || '---'}</td><td>${i.amount}</td></tr>`).join('');
-    return `<table class="receipt-table" style="margin-top:5px; font-size:12px;"><tr><th colspan="2" style="background:#eee">${title}</th></tr>${rows}</table>`;
+function renderSubTablePrint(title, arr, type) {
+        if(!arr || arr.length === 0) return "";
+        let h = `<div style="text-align:center; font-weight:900; margin-top:8px; border-top:1px dashed #000; padding-top:2px; font-size:10px;">-- ${title} --</div>`;
+        h += `<table class="receipt-table"><thead><tr>`;
+        
+        if(type==='visa') h += `<th>باتش</th><th>قيمة</th><th>ع</th>`;
+        else if(type==='trans') h += `<th>مبلغ</th><th>الرقم</th><th>الاسم</th>`;
+        else h += `<th>مبلغ</th><th>البيان</th><th>المستلم</th>`;
+        
+        h += `</tr></thead><tbody>`;
+        arr.forEach(x => {
+            h += `<tr>`;
+            if(type==='visa') h += `<td>${x.batch}</td><td>${x.amount}</td><td>${x.count}</td>`;
+            else if(type==='trans') h += `<td>${x.amount}</td><td>${x.mobile||''}</td><td>${x.name||''}</td>`;
+            else h += `<td>${x.amount}</td><td>${x.note||''}</td><td>${x.user||''}</td>`;
+            h += `</tr>`;
+        });
+        
+        let totalVal = sum(arr);
+        h += `<tr style="background:#eee"><td>إجمالي</td><td colspan="2">${totalVal}</td></tr>`;
+        
+        h += `</tbody></table>`;
+        return h;
 }
     
 
