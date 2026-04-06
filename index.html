@@ -40,7 +40,6 @@
 </head>
 <body class="p-4 md:p-6 pb-32 text-right">
 
-    <!-- Login Screen -->
     <div id="loginOverlay" class="fixed inset-0 bg-slate-100 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md text-center border border-slate-200 relative my-8">
             <img src="https://lh3.googleusercontent.com/pw/AP1GczOHV-3gVfsqN_Y3nGe3v3khgZh8jnMiyzrIg6KECReqrTpnHFK4Adt-_QMyqjcqzy4a2XuXO-sHdgygcqRXcBg0jRmhi4K82oIia841B8vVLescBEqAtn2sZrGf5UO8AqKouvByzQKvoXET4XtjA7-t=w2499-h2499-s-no-gm?authuser=0" 
@@ -68,7 +67,6 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div id="mainContent" class="hidden max-w-[90rem] mx-auto no-print">
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div class="flex items-center gap-4">
@@ -82,12 +80,14 @@
             </div>
             <div class="flex flex-wrap gap-2 justify-center">
                 <button id="logsBtn" onclick="openLogsModal()" class="hidden bg-slate-900 text-white px-6 py-3 rounded-2xl font-black shadow-lg hover:bg-blue-600 active:scale-95 transition-all flex items-center gap-2">تتبع التغييرات 🔍</button>
+                
+                <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2">تصدير إكسيل 📊</button>
+
                 <button onclick="fetchData()" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg hover:bg-blue-700 active:scale-95 transition-all">تحديث</button>
                 <button onclick="logout()" class="bg-white text-red-500 border border-red-100 px-4 py-3 rounded-2xl font-black hover:bg-red-50">خروج</button>
             </div>
         </header>
 
-        <!-- Stats Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 text-right font-bold">
             <div class="bg-white p-5 rounded-3xl shadow-sm border-r-8 border-blue-600">
                 <div class="flex justify-between items-start">
@@ -119,7 +119,6 @@
             </div>
         </div>
 
-        <!-- Filters Section -->
         <div class="bg-white p-6 rounded-[2.5rem] shadow-sm mb-6 flex flex-wrap gap-4 items-end border border-slate-100">
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase">اختيار الفرع</label>
@@ -139,7 +138,6 @@
             </div>
         </div>
 
-        <!-- Main Table -->
         <div class="bg-white rounded-[2.5rem] shadow-sm overflow-hidden border border-slate-100">
             <div class="overflow-x-auto">
                 <table class="w-full text-right min-w-[900px]">
@@ -161,7 +159,6 @@
         </div>
     </div>
 
-    <!-- Details Modal -->
     <div id="detailsModal" class="modal-overlay" onclick="if(event.target.id === 'detailsModal') closeModal('detailsModal')">
         <div class="modal-content p-8 animate-in fade-in zoom-in duration-200">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
@@ -188,7 +185,6 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
     <div id="editModal" class="modal-overlay" onclick="if(event.target.id === 'editModal') closeModal('editModal')">
         <div class="modal-content max-w-4xl p-8 animate-in fade-in zoom-in duration-200">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
@@ -216,7 +212,6 @@
         </div>
     </div>
 
-    <!-- Logs Modal -->
     <div id="logsModal" class="modal-overlay" onclick="if(event.target.id === 'logsModal') closeModal('logsModal')">
         <div class="modal-content max-w-5xl p-8 animate-in fade-in zoom-in duration-200">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
@@ -240,7 +235,6 @@
         </div>
     </div>
 
-    <!-- Bulk Actions -->
     <div id="bulkActions" class="hidden fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white p-5 rounded-[3rem] shadow-2xl flex items-center gap-10 z-50 border border-white/20">
         <span id="selectedCount" class="text-sm font-black text-blue-400 italic">0 سجلات مختارة</span>
         <button onclick="generateDailyReport()" class="bg-blue-600 px-12 py-3.5 rounded-3xl text-xs font-black hover:bg-blue-500 shadow-lg active:scale-95 transition-all">طبع مجمع 🖨️</button>
@@ -311,8 +305,7 @@
             } else alert("بيانات خاطئة");
         } catch(err) { alert("خطأ"); }
     }
-
-    function startApp() {
+  function startApp() {
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainContent').classList.remove('hidden');
         document.getElementById('userNameDisplay').innerText = currentUser.name;
@@ -330,10 +323,10 @@
     function logout() { sessionStorage.removeItem('audit_auth_system_v9_trace'); location.reload(); }
 
     function sum(arr) {
-    return arr ? arr.reduce((a, b) => a + (parseFloat(b.amount) || 0), 0) : 0;
-}
+        return arr ? arr.reduce((a, b) => a + (parseFloat(b.amount) || 0), 0) : 0;
+    }
 
-function renderSubTablePrint(title, arr, type) {
+    function renderSubTablePrint(title, arr, type) {
         if(!arr || arr.length === 0) return "";
         let h = `<div style="text-align:center; font-weight:900; margin-top:8px; border-top:1px dashed #000; padding-top:2px; font-size:10px;">-- ${title} --</div>`;
         h += `<table class="receipt-table"><thead><tr>`;
@@ -356,9 +349,8 @@ function renderSubTablePrint(title, arr, type) {
         
         h += `</tbody></table>`;
         return h;
-}
+    }
     
-
     function fetchData() {
         db.ref("treasury").once("value", s => {
             allRecords = []; const bSet = new Set();
@@ -377,8 +369,7 @@ function renderSubTablePrint(title, arr, type) {
             }
             applyFilters();
         });
-    }
-
+            }
     function applyFilters() {
         const bV = document.getElementById("fBranch").value;
         const dV = document.getElementById("fDate").value;
@@ -431,8 +422,7 @@ function renderSubTablePrint(title, arr, type) {
         document.getElementById("stWallet").innerText = s.w.toLocaleString();
         document.getElementById("stWalletCount").innerText = `${s.wc} ع`;
     }
-
-    function openEditModal(key) {
+  function openEditModal(key) {
         const item = allRecords.find(r => r.key === key);
         if(!item) return;
         editItemOriginal = JSON.parse(JSON.stringify(item));
@@ -480,8 +470,8 @@ function renderSubTablePrint(title, arr, type) {
             html += `<button type="button" onclick="removeEditArrayItem('${catKey}', ${idx})" class="w-[10%] text-red-500 font-black">✕</button></div>`;
         });
         return html + `</div></div>`;
-                    }
-   function updateEditArray(cat, idx, f, v) { editArraysData[cat][idx][f] = v; }
+    }
+  function updateEditArray(cat, idx, f, v) { editArraysData[cat][idx][f] = v; }
     function removeEditArrayItem(cat, idx) { editArraysData[cat].splice(idx, 1); renderEditArrays(); }
     function addEditArrayItem(cat, type) { 
         let obj = { amount: "" }; 
@@ -543,8 +533,8 @@ function renderSubTablePrint(title, arr, type) {
         });
 
         if(trace.length === 0) { closeModal('editModal'); return; }
-
-        try {
+      
+      try {
             await db.ref("treasury/" + key).update({
                 date: nDate, drawer: nDrawer, cash: nCash, actual: nActual, total: nTotal, diff: nDiff,
                 insta: clean.insta.length ? clean.insta : null,
@@ -589,7 +579,6 @@ function renderSubTablePrint(title, arr, type) {
         tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center animate-pulse font-black text-slate-400">جاري تحميل سجلات التتبع...</td></tr>`;
         document.getElementById('logsModal').style.display = 'flex';
         
-        // إصلاح القراءة من القاعدة لضمان ظهور البيانات فوراً
         db.ref("audit_logs").once("value", snap => {
             tbody.innerHTML = "";
             let logsArr = [];
@@ -597,15 +586,13 @@ function renderSubTablePrint(title, arr, type) {
                 logsArr.push({ id: child.key, ...child.val() });
             });
             
-            // ترتيب من الأحدث للأقدم
             logsArr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
             if(logsArr.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center font-black text-slate-400">لا توجد سجلات تعديل حتى الآن</td></tr>`;
                 return;
             }
-
-            logsArr.forEach(log => {
+          logsArr.forEach(log => {
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition-colors";
                 tr.innerHTML = `
@@ -661,11 +648,10 @@ function renderSubTablePrint(title, arr, type) {
         const c = document.querySelectorAll(".row-check:checked").length;
         document.getElementById("bulkActions").classList.toggle("hidden", c===0);
         document.getElementById("selectedCount").innerText = `${c} سجلات مختارة`;
-    }
-
-function printSingle(d) { printThermal(d, false); }
-
-    function printThermal(d, isAgg) {
+                }
+    
+    function printSingle(d) { printThermal(d, false); }
+  function printThermal(d, isAgg) {
         const area = document.getElementById("thermalArea");
         const branchTitle = isAgg ? Array.from(d.branchNames).join(" + ") : d.branchName;
         
@@ -678,7 +664,6 @@ function printSingle(d) { printThermal(d, false); }
                 </div>
             </div>
 
-            <!-- تم تعديل هذا السطر ليشمل اليوم بجانب التاريخ والدرج -->
             <table class="receipt-table" style="margin-bottom:8px; border:none;">
                 <tr style="border:none;">
                     <td style="border:1.5px solid #000;">اليوم: ${d.day || '---'}</td>
@@ -714,8 +699,7 @@ function printSingle(d) { printThermal(d, false); }
             </div>
         `;
         setTimeout(() => { window.print(); }, 300);
-}
-    
+    }
 
     function printThermalFinal(d, isAgg) {
         const area = document.getElementById("thermalArea");
@@ -726,7 +710,84 @@ function printSingle(d) { printThermal(d, false); }
             <div style="text-align:center; font-size:9px; margin-top:10px; border-top:1px dashed #000; padding-top:5px;">المراجع: ${currentUser.name} - ${new Date().toLocaleString('ar-EG')}</div>`;
             setTimeout(() => { window.print(); }, 300);
     }
-    
+  // دالة الطباعة المجمعة الجديدة
+    function generateDailyReport() {
+        const selectedKeys = Array.from(document.querySelectorAll(".row-check:checked")).map(cb => cb.value);
+        if (selectedKeys.length === 0) {
+            alert("برجاء تحديد جرد واحد على الأقل للطباعة.");
+            return;
+        }
+
+        const selectedData = allRecords.filter(r => selectedKeys.includes(r.key));
+
+        let agg = {
+            branchNames: new Set(),
+            date: selectedData[0]?.date || new Date().toLocaleDateString('ar-EG'),
+            day: 'مجمع',
+            cash: 0, actual: 0, total: 0, diff: 0,
+            insta: [], wallet: [], visa: [], purchases: [], expenses: []
+        };
+
+        selectedData.forEach(d => {
+            if(d.branchName) agg.branchNames.add(d.branchName);
+            agg.cash += (+d.cash || 0);
+            agg.actual += (+d.actual || 0);
+            agg.total += (+d.total || 0);
+            agg.diff += (+d.diff || 0);
+            
+            if (d.insta) agg.insta.push(...d.insta);
+            if (d.wallet) agg.wallet.push(...d.wallet);
+            if (d.visa) agg.visa.push(...d.visa);
+            if (d.purchases) agg.purchases.push(...d.purchases);
+            if (d.expenses) agg.expenses.push(...d.expenses);
+        });
+
+        printThermal(agg, true);
+    }
+
+    // دالة تصدير البيانات إلى Excel
+    function exportToExcel() {
+        const bV = document.getElementById("fBranch").value;
+        const dV = document.getElementById("fDate").value;
+        const drV = document.getElementById("fDrawer").value;
+        
+        const dataToExport = allRecords.filter(r => {
+            if (bV && r.branchName !== bV) return false;
+            if (dV && r.date !== dV) return false;
+            if (drV && r.drawer != drV) return false;
+            return true;
+        });
+
+        if(dataToExport.length === 0) {
+            alert("لا توجد بيانات متاحة للتصدير حالياً.");
+            return;
+        }
+      let csvContent = "\uFEFF"; // دعم اللغة العربية
+        csvContent += "الفرع,التاريخ,الدرج,الكاش النقدي,إجمالي انستا باي,إجمالي المحافظ,إجمالي الفيزا,إجمالي المشتريات,إجمالي المصروفات,الإجمالي العام,مبلغ POS الفعلي,الفرق\n";
+
+        dataToExport.sort((a,b) => (b.timestamp||0) - (a.timestamp||0)).forEach(d => {
+            const sumInsta = sum(d.insta);
+            const sumWallet = sum(d.wallet);
+            const sumVisa = sum(d.visa);
+            const sumPurchases = sum(d.purchases);
+            const sumExpenses = sum(d.expenses);
+            
+            csvContent += `${d.branchName},${d.date},${d.drawer || '1'},${d.cash || 0},${sumInsta},${sumWallet},${sumVisa},${sumPurchases},${sumExpenses},${d.total || 0},${d.actual || 0},${d.diff || 0}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `تقرير_الرقابة_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
 </script>
 </body>
-</html> 
+</html>
